@@ -1,5 +1,3 @@
-import { ethers } from 'ethers';
-import config from './utils/config';
 import fn from './utils/fn';
 
 async function main() {
