@@ -31,19 +31,21 @@ function touchDir(p: string) {
 /**
  * Get wallets from a BIP39 mnemonic
  */
-async function deriveWallets(n: number = 10): Promise<ethers.HDNodeWallet[]> {
+async function deriveWallets(n: number = 20): Promise<ethers.HDNodeWallet[]> {
     hi('Derive Wallet Accounts');
 
     let wallets: ethers.HDNodeWallet[] = [];
 
-    if (config['MNEMONIC'] && await prompts.askForConfirm(config['MNEMONIC'])) {
-        const passphrase = await prompts.askForPassphrase();
-        const accountIndex = await prompts.askForAccountIndex();
+    const words = config['MNEMONIC'].split(' ');
 
+    if (config['MNEMONIC'] && await prompts.askForConfirm(`Mnemonic: ${words.slice(0, 2).join(' ')} ... ${words.slice(-2).join(' ')}`)) {
+        const passphrase = await prompts.askForPassphrase();
         const baseWallet = ethers.HDNodeWallet.fromPhrase(config['MNEMONIC'], passphrase);
         const account0 = baseWallet.deriveChild(0);
 
         if (await prompts.askForConfirm(`BASE_Wallet: ${account0.address}`)) {
+            const accountIndex = await prompts.askForAccountIndex();
+
             for (let i = accountIndex; i < accountIndex + n; i++) {
                 wallets.push(baseWallet.deriveChild(i));
             }
