@@ -55,7 +55,7 @@ async function askForPassphrase(): Promise<string> {
  * 
  * @returns {string} account index
  */
-async function askForAccountIndex(hint: string = 'Account index'): Promise<number> {
+async function askForAccountIndex(hint: string = 'Account#_'): Promise<number> {
     while (true) {
         const response = await prompts({
             type: 'password',

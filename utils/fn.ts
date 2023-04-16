@@ -41,13 +41,15 @@ async function deriveWallets(n: number = 20): Promise<ethers.HDNodeWallet[]> {
     if (config['MNEMONIC'] && await prompts.askForConfirm(`Mnemonic: ${words.slice(0, 2).join(' ')} ... ${words.slice(-2).join(' ')}`)) {
         const passphrase = await prompts.askForPassphrase();
         const baseWallet = ethers.HDNodeWallet.fromPhrase(config['MNEMONIC'], passphrase);
-        const account0 = baseWallet.deriveChild(0);
+        const baseAccount = baseWallet.deriveChild(0);
 
-        if (await prompts.askForConfirm(`BASE_Wallet: ${account0.address}`)) {
+        if (await prompts.askForConfirm(`BASE_Wallet: ${baseAccount.address}`)) {
             const accountIndex = await prompts.askForAccountIndex();
-
-            for (let i = accountIndex; i < accountIndex + n; i++) {
-                wallets.push(baseWallet.deriveChild(i));
+            const account0 = baseWallet.deriveChild(accountIndex);
+            if (await prompts.askForConfirm(`Account#0: ${account0.address}`)) {
+                for (let i = accountIndex; i < accountIndex + n; i++) {
+                    wallets.push(baseWallet.deriveChild(i));
+                }
             }
         }
     }
