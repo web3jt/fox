@@ -5,8 +5,8 @@
 - [list addresses](./md/listAddr.md) - list accounts from `Mnemonic` + `Password` and `Account Index`
 - [list private keys](./md/listPriv.md) - list accounts and private keys from ...
 - [bulk identities](./md/idents.md) - generate random profiles
-- **list721alchemy** - list ERC721 NFT for target address using [Alchemy SDK](https://github.com/alchemyplatform/alchemy-sdk-js)
-- **list721ethers** - list ERC721 NFT for target address using [ethers.js](https://docs.ethers.org/v6/)
+- **list721alchemy** - list ERC721 NFTs for target address using [Alchemy SDK](https://github.com/alchemyplatform/alchemy-sdk-js)
+- **list721ethers** - list ERC721 NFTs for target address using [ethers.js](https://docs.ethers.org/v6/)
 
 
 ## Installation
