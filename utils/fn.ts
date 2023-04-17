@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import fs from 'fs';
 import prompts from './prompts';
-import config from './config';
+import CONFIG from './config';
 
 
 const hint = function (hintString: string = '', targetLength: number = 6) {
@@ -16,7 +16,7 @@ const hi = function (hintString: string) {
     hint(hintString, 0);
 }
 
-function touchDir(p: string) {
+const touchDir = function (p: string) {
     const _arr = p.split('/');
     const _pos = _arr[0] === '' ? 1 : 0;
     for (let i = _pos; i < _arr.length; i++) {
@@ -28,34 +28,54 @@ function touchDir(p: string) {
     }
 }
 
+const getProvider = async function () {
+    const selected = CONFIG.EVM_NETWORKS.SELECTED;
+    const confirm = await prompts.askForConfirm(`Use ${selected} network?`);
+
+    if (confirm) {
+        return new ethers.JsonRpcProvider(CONFIG.EVM_NETWORKS[selected])
+    }
+
+    console.log('');
+    process.exit(0);
+}
+
 /**
  * Get wallets from a BIP39 mnemonic
  */
-async function deriveWallets(n: number = 20): Promise<ethers.HDNodeWallet[]> {
+const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNodeWallet[]> {
     hi('Derive Wallet Accounts');
 
     let wallets: ethers.HDNodeWallet[] = [];
 
-    const words = config['MNEMONIC'].split(' ');
+    const words = CONFIG['MNEMONIC'].split(' ');
 
-    if (config['MNEMONIC'] && await prompts.askForConfirm(`Mnemonic: ${words.slice(0, 2).join(' ')} ... ${words.slice(-2).join(' ')}`)) {
+    if (CONFIG['MNEMONIC'] && await prompts.askForConfirm(`Mnemonic: ${words.slice(0, 2).join(' ')} ... ${words.slice(-2).join(' ')}`)) {
         const passphrase = await prompts.askForPassphrase();
-        const baseWallet = ethers.HDNodeWallet.fromPhrase(config['MNEMONIC'], passphrase);
+        const baseWallet = ethers.HDNodeWallet.fromPhrase(CONFIG['MNEMONIC'], passphrase);
         const baseAccount = baseWallet.deriveChild(0);
 
         if (await prompts.askForConfirm(`Wallet #0: ${baseAccount.address}`)) {
             const accountIndex = await prompts.askForAccountIndex();
             const account0 = baseWallet.deriveChild(accountIndex);
             if (await prompts.askForConfirm(`Account#0: ${account0.address}`)) {
-                for (let i = accountIndex; i < accountIndex + n; i++) {
+                if (0 === amount) {
+                    amount = await prompts.askForNumber('Amount');
+                }
+
+                for (let i = accountIndex; i < accountIndex + amount; i++) {
                     wallets.push(baseWallet.deriveChild(i));
                 }
             }
         }
     }
 
+    if (0 < wallets.length) {
+        return wallets;
+    }
+
     console.log('');
-    return wallets;
+    process.exit(0);
 }
 
 
@@ -79,6 +99,8 @@ export default {
     hi: hi,
 
     touchDir: touchDir,
+
+    getProvider: getProvider,
     deriveWallets: deriveWallets,
     // toEthSignedMessageHash: toEthSignedMessageHash,
 }

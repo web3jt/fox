@@ -3,6 +3,7 @@
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/prompts": "^2.4.4",
+    "alchemy-sdk": "^2.8.0",
     "ethers": "^6.3.0",
     "prompts": "^2.4.2",
     "typescript": "^5.0.4",

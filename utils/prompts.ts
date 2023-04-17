@@ -1,6 +1,8 @@
+import { ethers } from 'ethers';
 import prompts from 'prompts';
+import CONFIG from './config';
 
-async function askForConfirm(hint: string = 'Confirm'): Promise<boolean> {
+const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean> {
     while (true) {
         const response = await prompts({
             type: 'text',
@@ -11,10 +13,12 @@ async function askForConfirm(hint: string = 'Confirm'): Promise<boolean> {
         if (response.value) {
             return response.value.toLowerCase().startsWith('y');
         }
+
+        return false;
     }
 }
 
-async function askForNumber(hint: string = 'Input a number'): Promise<number> {
+const askForNumber = async function (hint: string = 'Input a number'): Promise<number> {
     while (true) {
         const response = await prompts({
             type: 'number',
@@ -35,7 +39,7 @@ async function askForNumber(hint: string = 'Input a number'): Promise<number> {
  * 
  * @see https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed
  */
-async function askForPassphrase(): Promise<string> {
+const askForPassphrase = async function (): Promise<string> {
     while (true) {
         const response = await prompts({
             type: 'password',
@@ -55,7 +59,7 @@ async function askForPassphrase(): Promise<string> {
  * 
  * @returns {string} account index
  */
-async function askForAccountIndex(hint: string = 'Account#_'): Promise<number> {
+const askForAccountIndex = async function (hint: string = 'Account#_'): Promise<number> {
     while (true) {
         const response = await prompts({
             type: 'password',
@@ -69,9 +73,78 @@ async function askForAccountIndex(hint: string = 'Account#_'): Promise<number> {
     }
 }
 
+const _isAddress = function (address: string): boolean {
+    try {
+        ethers.getAddress(address);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+const askForEvmAddress = async function (hint: string = 'Address'): Promise<string> {
+    const response = await prompts({
+        type: 'text',
+        name: 'value',
+        message: hint,
+        validate: (value: string) => _isAddress(value) ? true : 'Invalid address'
+    });
+
+    if (response.value) {
+        return ethers.getAddress(response.value);
+    }
+
+    console.log('');
+    process.exit(0);
+}
+
+
+const askForERC721ContractAddress = async function (): Promise<string> {
+    const ADDR = CONFIG['EVM_CONTRACT']['ERC721'];
+
+    const confirm = await askForConfirm(`ERC721 Contract: ${ADDR}`);
+
+    if (confirm) {
+        return ADDR;
+    }
+
+    return await askForEvmAddress('ERC721 Contract');
+}
+
+const askForSourceAddress = async function (): Promise<string> {
+    const ADDR = CONFIG['EVM_ADDRESS']['SOURCE'];
+
+    const confirm = await askForConfirm(`Source  Address: ${ADDR}`);
+
+    if (confirm) {
+        return ADDR;
+    }
+
+    return await askForEvmAddress('Source  Address');
+}
+
+const askForTargetAddress = async function (): Promise<string> {
+    const ADDR = CONFIG['EVM_ADDRESS']['TARGET'];
+
+    const confirm = await askForConfirm(`Target  Address: ${ADDR}`);
+
+    if (confirm) {
+        return ADDR;
+    }
+
+    return await askForEvmAddress('Target  Address');
+}
+
+
+
+
 export default {
     askForConfirm: askForConfirm,
     askForNumber: askForNumber,
     askForPassphrase: askForPassphrase,
     askForAccountIndex: askForAccountIndex,
+
+    askForERC721ContractAddress: askForERC721ContractAddress,
+    askForSourceAddress: askForSourceAddress,
+    askForTargetAddress: askForTargetAddress,
 }
