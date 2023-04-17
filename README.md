@@ -1,8 +1,10 @@
 # TSS
 
-- [list addresses](./md/listAddr.md)
-- [list private keys](./md/listPriv.md)
-- [bulk identities](./md/idents.md)
+
+- [new mnemonic](./md/newMnemonic.md) make a new Mnemonic
+- [list addresses](./md/listAddr.md) list accounts from `Mnemonic` + `Password` and `Account Index`
+- [list private keys](./md/listPriv.md) list accounts and private keys from ...
+- [bulk identities](./md/idents.md) generate random profiles
 
 
 ## Installation
