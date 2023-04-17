@@ -171,6 +171,7 @@ export default {
     askForPassphrase: askForPassphrase,
     askForAccountIndex: askForAccountIndex,
 
+    askForEvmAddress: askForEvmAddress,
     askForERC20ContractAddress: askForERC20ContractAddress,
     askForERC721ContractAddress: askForERC721ContractAddress,
     askForERC1155ContractAddress: askForERC1155ContractAddress,
