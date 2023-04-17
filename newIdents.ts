@@ -1,9 +1,7 @@
-import { HDNodeWallet, ethers } from 'ethers';
 import fs from 'fs';
-import moment from 'moment';
 import axios from 'axios';
-import fn from './utils/fn';
 import prompts from './utils/prompts';
+import fn from './utils/fn';
 
 const BASE_DIR = '_outputs/idents';
 
