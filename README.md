@@ -25,6 +25,8 @@ $ cd tss
 $ npm install
 # or `yarn`
 $ cp config.sample.yaml config.yaml
+# if you have `Visual Studio Code` installed
+$ code config.yaml
 ```
 
 Edit your `./config.yaml` as you will
