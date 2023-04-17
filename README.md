@@ -28,7 +28,7 @@ $ cp config.sample.yaml config.yaml
 Edit your `./config.yaml` as you will
 
 
-## dependencies
+## Documentations
 
 - [Alchemy SDK](https://docs.alchemy.com/docs)
 - [ethers.js](https://docs.ethers.org/v6/)
