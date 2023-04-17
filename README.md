@@ -20,10 +20,23 @@ $ npm install
 $ cp config.sample.yaml config.yaml
 ```
 
-Edit your `./config.yaml`
+Edit your `./config.yaml` as you will
 
 
 ## bulk identities
+
+You can generate a random dateset, including:
+
+- Username
+- Gender
+- Title
+- Name
+- State
+- City
+- Street
+- Postcode / ZIP
+- Phone number
+- Cell number
 
 ```bash
 $ ts-node newIdents.ts
@@ -38,26 +51,11 @@ $ ts-node newIdents.ts
 # 5 RitthyWatts5611
 ```
 
-Then you will get a dateset, include:
-
-- Username
-- Gender
-- Title
-- Name
-- State
-- City
-- Street
-- Postcode / ZIP
-- Phone number
-- Cell number
-
-
-They are saved at `./outputs/idents/sample.csv`
+It will be saved at `./outputs/idents/sample.csv`
 
 > You can open `.csv` with:
 > - `Numbers.app` on Mac
 > - `Excel` on Windows
-
 
 ```text
 #,Username,Gender,Title,Name,State,City,Street,Postcode,Phone,Cell
