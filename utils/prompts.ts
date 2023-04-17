@@ -2,6 +2,9 @@ import { ethers } from 'ethers';
 import prompts from 'prompts';
 import CONFIG from './config';
 
+/**
+ * Ask for a confirmation
+ */
 const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean> {
     while (true) {
         const response = await prompts({
@@ -18,6 +21,9 @@ const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean
     }
 }
 
+/**
+ * Ask for a number
+ */
 const askForNumber = async function (hint: string = 'Input a number'): Promise<number> {
     while (true) {
         const response = await prompts({
@@ -73,6 +79,9 @@ const askForAccountIndex = async function (hint: string = 'Account#_'): Promise<
     }
 }
 
+/**
+ * Returns true if the address is valid
+ */
 const _isAddress = function (address: string): boolean {
     try {
         ethers.getAddress(address);
@@ -82,6 +91,9 @@ const _isAddress = function (address: string): boolean {
     }
 }
 
+/**
+ * Ask for an EVM address
+ */
 const askForEvmAddress = async function (hint: string = 'Address'): Promise<string> {
     const response = await prompts({
         type: 'text',
@@ -98,7 +110,9 @@ const askForEvmAddress = async function (hint: string = 'Address'): Promise<stri
     process.exit(0);
 }
 
-
+/**
+ * Ask for an ERC20 contract address
+ */
 const askForERC20ContractAddress = async function (): Promise<string> {
     const ADDR = CONFIG['EVM_CONTRACT']['ERC20'];
 
@@ -111,6 +125,9 @@ const askForERC20ContractAddress = async function (): Promise<string> {
     return await askForEvmAddress('ERC20 Contract');
 }
 
+/**
+ * Ask for an ERC721 contract address
+ */
 const askForERC721ContractAddress = async function (): Promise<string> {
     const ADDR = CONFIG['EVM_CONTRACT']['ERC721'];
 
@@ -123,7 +140,9 @@ const askForERC721ContractAddress = async function (): Promise<string> {
     return await askForEvmAddress('ERC721 Contract');
 }
 
-
+/**
+ * Ask for an ERC1155 contract address
+ */
 const askForERC1155ContractAddress = async function (): Promise<string> {
     const ADDR = CONFIG['EVM_CONTRACT']['ERC1155'];
 
@@ -136,8 +155,9 @@ const askForERC1155ContractAddress = async function (): Promise<string> {
     return await askForEvmAddress('ERC1155 Contract');
 }
 
-
-
+/**
+ * Ask for a source address
+ */
 const askForSourceAddress = async function (): Promise<string> {
     const ADDR = CONFIG['EVM_ADDRESS']['SOURCE'];
 
@@ -150,6 +170,9 @@ const askForSourceAddress = async function (): Promise<string> {
     return await askForEvmAddress('Source  Address');
 }
 
+/**
+ * Ask for a target address
+ */
 const askForTargetAddress = async function (): Promise<string> {
     const ADDR = CONFIG['EVM_ADDRESS']['TARGET'];
 
@@ -161,9 +184,6 @@ const askForTargetAddress = async function (): Promise<string> {
 
     return await askForEvmAddress('Target  Address');
 }
-
-
-
 
 export default {
     askForConfirm: askForConfirm,
