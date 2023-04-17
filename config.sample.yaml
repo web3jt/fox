@@ -1,0 +1,19 @@
+MNEMONIC: "invite adult amount position enable edge song episode cross cotton stand purse"
+
+ALCHEMY_API_KEY: ""
+
+EVM_NETWORKS:
+  SELECTED: "MAINNET"
+
+  MAINNET: "https://eth-mainnet.g.alchemy.com/v2/<...>"
+  GOERLI: "https://eth-goerli.alchemyapi.io/v2/<...>"
+  ETHW: "https://mainnet.ethereumpow.org"
+
+EVM_CONTRACT:
+  ERC20: ""
+  ERC721: ""
+  ERC1155: ""
+
+EVM_ADDRESS:
+  TARGET: ""
+  SOURCE: ""
