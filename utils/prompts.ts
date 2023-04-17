@@ -39,6 +39,23 @@ const askForNumber = async function (hint: string = 'Input a number'): Promise<n
 }
 
 /**
+ * Ask for a string
+ */
+const askForString = async function (hint: string = "Input a string"): Promise<string> {
+    while (true) {
+        const response = await prompts({
+            type: 'text',
+            name: 'value',
+            message: hint,
+        });
+
+        if (response.value) {
+            return response.value;
+        }
+    }
+}
+
+/**
  * Ask for a BIP39 passphrase
  * 
  * @return {string} passphrase
@@ -188,6 +205,7 @@ const askForTargetAddress = async function (): Promise<string> {
 export default {
     askForConfirm: askForConfirm,
     askForNumber: askForNumber,
+    askForString: askForString,
     askForPassphrase: askForPassphrase,
     askForAccountIndex: askForAccountIndex,
 

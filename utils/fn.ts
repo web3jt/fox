@@ -78,7 +78,6 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
     process.exit(0);
 }
 
-
 // /**
 //  * Convert a message hash to an Ethereum Signed Message hash
 //  * 
@@ -97,9 +96,7 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
 export default {
     hint: hint,
     hi: hi,
-
     touchDir: touchDir,
-
     getProvider: getProvider,
     deriveWallets: deriveWallets,
     // toEthSignedMessageHash: toEthSignedMessageHash,
