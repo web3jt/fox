@@ -32,4 +32,4 @@ Edit your `./config.yaml` as you will
 ## dependencies
 
 - [ethers.js](https://docs.ethers.org/v6/)
-
+- [Alchemy SDK](https://docs.alchemy.com/docs)
