@@ -1,5 +1,7 @@
 # TSS
 
+> Keep SAFE even exposed your Mnemonic...
+
 - [new mnemonic](./md/newMnemonic.md) - make a new Mnemonic
 - [list addresses](./md/listAddr.md) - list accounts from `Mnemonic` + `Password` and `Account Index`
 - [list private keys](./md/listPriv.md) - list accounts and private keys from ...
