@@ -1,0 +1,25 @@
+# list addresses
+
+```bash
+$ ts-node listAddr.ts 
+#
+# --------- --------- Derive Wallet Accounts --------- ---------
+# ✔ Mnemonic: invite adult ... stand purse (y/N) … y
+# ✔ BIP39 Passphrase … ********
+# ✔ Wallet #0: 0xB6c286e30F47C7752d25ae0d5505B2186A337B61 (y/N) … y
+# ✔ Account#_ … ****
+# ✔ Account#0: 0x6Ba45eC27D3f3196CCf6D53cFf6efE7257D970EE (y/N) … y
+# ✔ Amount … 10
+# ✔ Check Balance (y/N) … n
+# 
+# 0x6Ba45eC27D3f3196CCf6D53cFf6efE7257D970EE
+# 0xD814A580CdFE5af0aee140447845C5fC2b5eb481
+# 0x4Bb27a04f975C8E6C6776923311e0eD6390D5b59
+# 0xC545A156A9d22D6e8c4089Be3746968e04F959Ed
+# 0x3482A4fBE0cDc76C16B6922722aDF9840568b74c
+# 0xeBc174722f843958e32d1470d99ba4f1941D43F5
+# 0x00648b8de3382196e475bC8DAd7E68442fB7cC49
+# 0x6715C5a33aB3E3D86215D98b9d6F629532D9E21E
+# 0x5913c856DAFFE058053084497d3c3d6eF8f14734
+# 0xc9EEBf39F6f039Aee37C430A0E18885459036103
+```

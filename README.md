@@ -1,5 +1,7 @@
 # TSS
 
+- [list addresses](./md/listAddr.md)
+- [list private keys](./md/listPriv.md)
 - [bulk identities](./md/idents.md)
 
 
