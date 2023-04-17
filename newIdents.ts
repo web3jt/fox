@@ -1,15 +1,14 @@
 import fs from 'fs';
 import axios from 'axios';
 import prompts from './utils/prompts';
-import fn from './utils/fn';
 
 const BASE_DIR = '_outputs/idents';
 
-const getRandomInt = function () {
-    const range = 9999 - 1000
-    const rand = Math.random() * range
+const getRandomInt = function (): number {
+    const range = 9999 - 1000;
+    const rand = Math.random() * range;
 
-    return Math.ceil(rand) + 1000
+    return Math.ceil(rand) + 1000;
 }
 
 const fSave = function (filename: string, raw: string[]) {
@@ -17,29 +16,21 @@ const fSave = function (filename: string, raw: string[]) {
 }
 
 async function main() {
+    console.log('');
     const amount = await prompts.askForNumber('How many identities do you need?');
     if (0 < amount) {
         const key = await prompts.askForString('Filename');
-        const fnAccounts = `${BASE_DIR}/${key}_accounts.txt`;
-        const fnPrivates = `${BASE_DIR}/${key}_privates.txt`;
-        const fnTable = `${BASE_DIR}/${key}_table.csv`;
+        const fnTable = `${BASE_DIR}/${key}.csv`;
 
-        let accounts: string[] = [];
-        let privates: string[] = [];
-        let table: string[] = ['#,Address,Username,Gender,Title,Name,State,City,Street,Postcode,Phone,Cell'];
+        let table: string[] = ['#,Username,Gender,Title,Name,State,City,Street,Postcode,Phone,Cell'];
 
-        const savePrivates = await prompts.askForConfirm('Save private keys?');
-        const wallets = await fn.deriveWallets(amount);
         const resp = await axios.get(`https://randomuser.me/api/?nat=us&results=${amount}`)
         const idents = resp.data.results;
 
         // loop with index
         console.log('');
-        for (let i = 0; i < wallets.length; i++) {
+        for (let i = 0; i < amount; i++) {
             const n = i + 1;
-            const wallet = wallets[i];
-            const address = wallet.address;
-            const privKey = wallet.privateKey;
 
             const ident = idents[i];
             const first = ident.name.first;
@@ -54,16 +45,12 @@ async function main() {
             const phone = ident.phone;
             const cell = ident.cell;
 
-            accounts.push(address);
-            table.push(`${n},${address},${first}${last}${rand},${gender},${title},${first} ${last},${state},${city},${street},${postCode},${phone},${cell}`);
-            if (savePrivates) privates.push(privKey);
+            table.push(`${n},${first}${last}${rand},${gender},${title},${first} ${last},${state},${city},${street},${postCode},${phone},${cell}`);
 
-            console.log(n, address);
+            console.log(n, `${first}${last}${rand}`);
         }
 
-        fSave(fnAccounts, accounts);
         fSave(fnTable, table);
-        if (savePrivates) fSave(fnPrivates, privates);
     }
 
     console.log('');
