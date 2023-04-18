@@ -2,12 +2,18 @@
 
 > Keep SAFE even exposed your Mnemonic...
 
-- [new mnemonic](./md/newMnemonic.md) - make a new Mnemonic
-- [list addresses](./md/listAddr.md) - list accounts from `Mnemonic` + `Password` and `Account Index`
-- [list private keys](./md/listPriv.md) - list accounts and private keys from ...
-- [bulk identities](./md/idents.md) - generate random profiles
-- **list721alchemy.ts** - list ERC721 NFTs for target address using [Alchemy SDK](https://github.com/alchemyplatform/alchemy-sdk-js)
-- **list721ethers.ts** - list ERC721 NFTs for target address using [ethers.js](https://github.com/ethers-io/ethers.js)
+- [newMnemonic](./md/newMnemonic.md)<br>
+  make a new Mnemonic
+- [listAddr](./md/listAddr.md)<br>
+  list accounts from `Mnemonic` + `Password` and `Account Index`
+- [listPriv](./md/listPriv.md)<br>
+  list accounts and private keys from ...
+- [newIdents](./md/idents.md)<br>
+  generate random profiles
+- **list721alchemy.ts**<br>
+  list ERC721 NFTs for target address using [Alchemy SDK](https://github.com/alchemyplatform/alchemy-sdk-js)
+- **list721ethers.ts**<br>
+  list ERC721 NFTs for target address using [ethers.js](https://github.com/ethers-io/ethers.js)
 
 
 ## Installation
