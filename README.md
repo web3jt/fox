@@ -23,7 +23,7 @@ Install:
 - [Node.js](https://nodejs.org/en/) (choose the latest LTS version)
 - [Git](https://git-scm.com/)
 
-Make a new directory and run:
+Run in terminal:
 
 ```bash
 $ git clone https://github.com/web3jt/tss.git
