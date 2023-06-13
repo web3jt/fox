@@ -743,10 +743,10 @@ utf-8-validate@^5.0.2:
   dependencies:
     node-gyp-build "^4.3.0"
 
-viem@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-1.0.2.tgz#0798c80598daddc05b7132b642ae2f60811c4fbe"
-  integrity sha512-3Bn+CuInU8zsdKqqzFDWL018x4B9HDjPIISztReGcBjikY+04tP7CrQQCf1lbinK3wWrEoFU9VDiptCciNjUQA==
+viem@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-1.0.6.tgz#804549d5d4b66de1b231a655ec5f7b15f97ffd86"
+  integrity sha512-NOVDREj8bWHajuP5Nw6edd0v3auuGWvLHGScmo9OOt1l7g3f1xMQxPA6JlhNmWXzoHjzzxt/5SorBn2DQ6N6Sg==
   dependencies:
     "@adraffy/ens-normalize" "1.9.0"
     "@noble/curves" "1.0.0"
