@@ -429,10 +429,10 @@ aes-js@4.0.0-beta.5:
   resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-4.0.0-beta.5.tgz#8d2452c52adedebc3a3e28465d858c11ca315873"
   integrity sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==
 
-alchemy-sdk@^2.9.0:
-  version "2.9.0"
-  resolved "https://registry.yarnpkg.com/alchemy-sdk/-/alchemy-sdk-2.9.0.tgz#f8f32ae90c789019053814c7bc34d9aa7f66bcbd"
-  integrity sha512-vPFMGP43LrFQ9XOLHgVNyJCd1DDPK5qXniF5pdZzUA52h/FMHKkMaOayZNf63Y6GDQ1KGHqtyJIoSZtbPeg9kw==
+alchemy-sdk@^2.9.2:
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/alchemy-sdk/-/alchemy-sdk-2.9.2.tgz#1aa2afdef0266295c53738b00c2b0b001cdc7d5e"
+  integrity sha512-DAmONxbzgqnKrQP8OLuF9rYdgbxJuxwTUmu3kC4/+1yD5p3Lhg4ZQP1RFTK4DTD9J1O0XEAcqkywmpW6hgR5lQ==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
     "@ethersproject/abstract-provider" "^5.7.0"
