@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "viem": "^1.2.10"
+    "viem": "^1.2.14"
   },
   "devDependencies": {
     "@types/node": "^20.2.5",
