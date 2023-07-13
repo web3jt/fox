@@ -3,7 +3,7 @@
     "viem": "^1.2.10"
   },
   "devDependencies": {
-    "@types/node": "^20.2.5",
+    "@types/node": "^20.4.2",
     "@types/prompts": "^2.4.4",
     "alchemy-sdk": "^2.9.0",
     "axios": "^1.4.0",
