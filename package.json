@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "canvas": "^2.11.2",
     "viem": "^1.0.2"
   },
   "devDependencies": {

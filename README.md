@@ -38,6 +38,15 @@ $ code config.yaml
 Edit your `./config.yaml` as you will
 
 
+### for canvas
+
+[canvas](https://www.npmjs.com/package/canvas) on MacOS
+
+```bash
+$ brew install pkg-config cairo pango libpng jpeg giflib librsvg pixman
+```
+
+
 ## Documentations
 
 - [Alchemy SDK](https://docs.alchemy.com/docs)

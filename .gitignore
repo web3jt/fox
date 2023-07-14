@@ -2,8 +2,8 @@ config.yaml
 
 .DS_Store
 .idea
-_output/*.txt
-_output/*.csv
+_source
+_outputs
 
 debug.js
 debug.ts
