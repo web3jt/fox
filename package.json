@@ -1,7 +1,11 @@
 {
   "dependencies": {
+<<<<<<< HEAD
     "canvas": "^2.11.2",
     "viem": "^1.0.2"
+=======
+    "viem": "^1.2.10"
+>>>>>>> a737f1c6ae149c96711f02b7a015e253b9fe4055
   },
   "devDependencies": {
     "@types/node": "^20.2.5",
