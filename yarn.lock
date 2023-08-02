@@ -2035,10 +2035,10 @@ hashlru@^2.3.0:
   resolved "https://registry.yarnpkg.com/hashlru/-/hashlru-2.3.0.tgz#5dc15928b3f6961a2056416bb3a4910216fdfb51"
   integrity sha512-0cMsjjIC8I+D3M44pOQdsy0OHXGLVz6Z0beRuufhKa0KfaD2wGwAev6jILzXsd3/vpnNQJmWyZtIILqM1N+n5A==
 
-helia@^1.3.8:
-  version "1.3.8"
-  resolved "https://registry.yarnpkg.com/helia/-/helia-1.3.8.tgz#4ba6910a6496ac163226f594811ee6eafdebb3db"
-  integrity sha512-LRBQcvAMkTr8dG8MquIXJjP1kAdtJLpQm8/XCj1i8zlh16uFxFxLmTqCK5HhSYWO4C+xZP4/v7drs8CZvfn+PQ==
+helia@^1.3.9:
+  version "1.3.9"
+  resolved "https://registry.yarnpkg.com/helia/-/helia-1.3.9.tgz#9cbd5853532ce585bff490f1fa5f5b4d094f1f05"
+  integrity sha512-u1l01XEicNUDQ192BZ68RZceMsSa4TteHREKEeVO4+GwsxArfE7wESm12lnWpFHSKhBtFKvCR/tMogtGT6UMJg==
   dependencies:
     "@chainsafe/libp2p-gossipsub" "^8.0.0"
     "@chainsafe/libp2p-noise" "^12.0.0"
