@@ -127,8 +127,10 @@ const askForPassphrase = async function (): Promise<string> {
       type: 'password',
       name: 'value',
       message: 'BIP39 Passphrase',
-      validate: (value: string) => 8 > value.length ? 'Too short' : true
+      // validate: (value: string) => 8 > value.length ? 'Too short' : true
     });
+
+    if (`/` === response.value) return '';
 
     if (response.value) {
       return response.value;

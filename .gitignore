@@ -10,6 +10,8 @@ debug.ts
 test.js
 test.ts
 
+yarn.lock
+
 # Logs
 logs
 *.log
