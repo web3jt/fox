@@ -30,8 +30,7 @@ async function main() {
     return;
   }
 
-  const mnemonic = `${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`;
-  if (!await prompts.askForConfirm(`Mnemonic: ${mnemonic}`)) {
+  if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
     console.log('ABANDEND MNEMONIC')
     return;
   }
