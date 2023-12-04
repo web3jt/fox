@@ -23,7 +23,7 @@ async function main() {
   if (!await prompts.askForConfirm(`Mnemonic: ${mnemonic}`)) return;
 
   const passphrase = await prompts.askForPassphrase();
-  const seed = await bip39.mnemonicToSeed(mnemonic, passphrase);
+  const seed = await bip39.mnemonicToSeed(CONFIG['MNEMONIC'], passphrase);
   const root = bip32.fromSeed(seed);
 
   for (let i = 0; i < 3; i++) {
@@ -47,6 +47,8 @@ async function main() {
     console.log('p2sh   (P2SH)   :', p2sh.address);
     console.log('p2tr   (Taproot):', p2tr.address);
   }
+
+
 
   // const privateKey = keyPair.privateKey;
   // const publicKeyHash = bitcoin.crypto.hash160(publicKey);
