@@ -16,19 +16,33 @@ export const toXOnly = (publicKey: Buffer) => {
 }
 
 async function main() {
-  const WORDS = CONFIG['MNEMONIC'].split(' ');
-  if (12 !== WORDS.length) return;
+  const MNEMONIC = CONFIG['MNEMONIC'];
+
+  const WORDS = MNEMONIC.split(' ');
+  if (12 !== WORDS.length) {
+    console.log('INVALID MNEMONIC')
+    return;
+  }
+
+  const VALID = bip39.validateMnemonic(MNEMONIC);
+  if (!VALID) {
+    console.log('INVALID MNEMONIC')
+    return;
+  }
 
   const mnemonic = `${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`;
-  if (!await prompts.askForConfirm(`Mnemonic: ${mnemonic}`)) return;
+  if (!await prompts.askForConfirm(`Mnemonic: ${mnemonic}`)) {
+    console.log('ABANDEND MNEMONIC')
+    return;
+  }
 
   const passphrase = await prompts.askForPassphrase();
-  const seed = await bip39.mnemonicToSeed(CONFIG['MNEMONIC'], passphrase);
+  const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
   const root = bip32.fromSeed(seed);
 
   for (let i = 0; i < 3; i++) {
     console.log(`\n--- ${i} ---`);
-    const path = `m/86'/0'/0'/${i}/0`;
+    const path = `m/86'/0'/0'/0/${i}`;
     const keyPair = root.derivePath(path);
 
     const wif = keyPair.toWIF();
