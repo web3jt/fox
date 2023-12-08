@@ -36,13 +36,15 @@ const askForNumber = async function (hint: string = 'Input a number', default_: 
       validate: value => {
         value = value.trim();
 
+        if (isNaN(parseInt(value))) {
+          return 'Invalid number, please try again';
+        }
+
         if (value === '0') return true;
         if (value === null || value === undefined || value === '') {
           return 'Please enter a number';
         }
-        if (isNaN(value)) {
-          return 'Invalid number, please try again';
-        }
+
         return true;
       }
     });
@@ -291,18 +293,39 @@ export const askForGas = async function (): Promise<{
 /**
  * Ask for a number
  */
-const askForNonce = async function (hint_: string = 'Input a number', nonce_: number = 0): Promise<number> {
+const askForNonce = async function (hint_: string = 'Input a number', nonce_: string = '0'): Promise<bigint> {
   while (true) {
     const response = await prompts({
-      type: 'number',
+      type: 'text',
       name: 'value',
       message: hint_,
       initial: nonce_,
-      validate: value => (value !== null && value !== undefined && value <= nonce_) ? true : `Must be less than or equal to ${nonce_}`
+      validate: value => {
+        value = value.trim();
+
+        if (isNaN(parseInt(value))) {
+          return 'Invalid number, please try again';
+        }
+
+        if (value === '0') return true;
+
+        if (value === null || value === undefined || value === '') {
+          return 'Please enter a number';
+        }
+
+        const nonce = BigInt(nonce_);
+        const n = BigInt(value);
+
+        if (n > nonce) {
+          return `Must be less than or equal to ${nonce_}`
+        }
+
+        return true;
+      }
     });
 
     if (response.value) {
-      return parseInt(response.value);
+      return BigInt(response.value.trim());
     }
   }
 }

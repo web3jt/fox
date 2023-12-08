@@ -8,4 +8,5 @@ EVM_NETWORKS:
   ETH_MAINNET: https://eth-mainnet.g.alchemy.com/v2/...
   ETH_SEPOLIA: https://eth-sepolia.g.alchemy.com/v2/...
   BSC_MAINNET: https://bsc-dataseed.binance.org
-  ETHW: https://mainnet.ethereumpow.org
+  POLYGON_MAINNET: https://polygon-rpc.com
+  ETHW: "https://mainnet.ethereumpow.org"

@@ -26,7 +26,7 @@ async function main() {
   if (!await prompts.askForConfirm(`Balance: ${ethers.formatUnits(balance, 'ether')} E`)) return;
 
   const _nonce = await PROVIDER.getTransactionCount(wallet.address);
-  let nonce: number = await prompts.askForNonce('Nonce would start at', _nonce);
+  let nonce: bigint = await prompts.askForNonce('Nonce would start at', _nonce.toString());
 
 
   const _tx = {
@@ -68,7 +68,7 @@ async function main() {
   for (let i = 0; i < amount; i++) {
     const tx = await walletWithProvider.sendTransaction({
       ...overrides,
-      nonce: nonce,
+      nonce: Number(nonce),
     });
 
     console.log(nonce, tx.hash);
