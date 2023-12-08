@@ -37,21 +37,24 @@ async function main() {
 
   const gasLimit = await PROVIDER.estimateGas(_tx);
 
-  await fn.printGas();
-  const userGas = await prompts.askForGas();
+  const fee = await fn.getGasFeeData();
+  const userGas = await prompts.askForGas(fee);
 
 
-
-  const overrides = {
+  const overrides = userGas.maxFee !== undefined ? {
     ..._tx,
     gasLimit: gasLimit,
     maxPriorityFeePerGas: userGas.priorityFee,
     maxFeePerGas: userGas.maxFee,
+  } : {
+    ..._tx,
+    gasLimit: gasLimit,
+    gasPrice: userGas.gasPrice,
   }
 
   const walletWithProvider = wallet.connect(PROVIDER);
 
-  const spent = BigInt(gasLimit) * userGas.maxFee;
+  const spent = BigInt(gasLimit) * (userGas.maxFee || userGas.gasPrice);
   const maxAmount = balance / spent;
   const amount = await prompts.askForNumber(`How many inscriptions do you want, max to ${maxAmount}`);
 
@@ -66,12 +69,17 @@ async function main() {
   )) return;
 
   for (let i = 0; i < amount; i++) {
-    const tx = await walletWithProvider.sendTransaction({
+    console.log({
       ...overrides,
       nonce: Number(nonce),
     });
 
-    console.log(nonce, tx.hash);
+    // const tx = await walletWithProvider.sendTransaction({
+    //   ...overrides,
+    //   nonce: Number(nonce),
+    // });
+
+    // console.log(nonce, tx.hash);
 
     nonce++;
   }

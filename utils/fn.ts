@@ -100,19 +100,21 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
 // }
 
 
-const printGas = async function () {
+const getGasFeeData = async function () {
   const fee = await provider.getFeeData();
 
   hint('Current GAS Data');
   console.log(`    Base Fee: ${ethers.formatUnits(fee.gasPrice, "gwei")} GWei`);
-  console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
-  console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
+  if (fee.maxPriorityFeePerGas) console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
+  if (fee.maxFeePerGas) console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
   console.log('');
+
+  return fee;
 }
 
 
 const getOverridesByAskGas = async function (base_overrides = {}) {
-  await printGas();
+  const fee = await getGasFeeData();
 
   const userGas = await prompts.askForGas();
   return {
@@ -131,7 +133,7 @@ export default {
   deriveWallets: deriveWallets,
   // toEthSignedMessageHash: toEthSignedMessageHash,
 
-  printGas: printGas,
+  getGasFeeData: getGasFeeData,
   getOverridesByAskGas: getOverridesByAskGas,
 }
 

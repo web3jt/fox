@@ -263,10 +263,31 @@ const askForTargetAddress = async function (): Promise<string> {
 /**
  * Ask for gas
  */
-export const askForGas = async function (): Promise<{
-  maxFee: bigint;
-  priorityFee: bigint;
+export const askForGas = async function (fee_ = undefined): Promise<{
+  gasPrice: bigint | undefined;
+  maxFee: bigint | undefined;
+  priorityFee: bigint | undefined;
 }> {
+  if (fee_ && !fee_.maxFee) {
+    while (true) {
+      const response = await prompts([
+        {
+          type: 'text',
+          name: 'gasPrice',
+          message: 'Enter gas price:',
+        }
+      ]);
+
+      if (response.gasPrice) {
+        return {
+          gasPrice: ethers.parseUnits(response.gasPrice.trim(), "gwei"),
+          maxFee: undefined,
+          priorityFee: undefined,
+        };
+      }
+    }
+  }
+
   while (true) {
     const response = await prompts([
       {
@@ -283,8 +304,9 @@ export const askForGas = async function (): Promise<{
 
     if (response.maxFee && response.priorityFee) {
       return {
-        maxFee: ethers.parseUnits(response.maxFee, "gwei"),
-        priorityFee: ethers.parseUnits(response.priorityFee, "gwei"),
+        gasPrice: undefined,
+        maxFee: ethers.parseUnits(response.maxFee.trim(), "gwei"),
+        priorityFee: ethers.parseUnits(response.priorityFee.trim(), "gwei"),
       };
     }
   }
