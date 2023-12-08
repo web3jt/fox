@@ -61,9 +61,9 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
     const baseAccount = baseWallet.deriveChild(0);
 
     if (await prompts.askForConfirm(`Wallet #0: ${baseAccount.address}`)) {
-      const accountIndex = await prompts.askForAccountIndex();
-      const account0 = baseWallet.deriveChild(accountIndex);
-      if (await prompts.askForConfirm(`Account#0: ${account0.address}`)) {
+      const accountIndex = await prompts.askForNumber('Account#_', '0');
+      const accountStart = baseWallet.deriveChild(accountIndex);
+      if (await prompts.askForConfirm(`Account#${accountIndex}: ${accountStart.address}`)) {
         if (0 === amount) {
           amount = await prompts.askForNumber('Amount');
         }
@@ -102,7 +102,7 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
 const printGas = async function () {
   const fee = await provider.getFeeData();
 
-  hint('GAS');
+  hint('Current GAS Data');
   console.log(`    Base Fee: ${ethers.formatUnits(fee.gasPrice, "gwei")} GWei`);
   console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
   console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
@@ -116,8 +116,8 @@ const getOverridesByAskGas = async function (base_overrides = {}) {
   const userGas = await prompts.askForGas();
   return {
     ...base_overrides,
-    maxPriorityFeePerGas: ethers.parseUnits(userGas.priorityFee, "gwei"),
-    maxFeePerGas: ethers.parseUnits(userGas.maxFee, "gwei"),
+    maxPriorityFeePerGas: userGas.priorityFee,
+    maxFeePerGas: userGas.maxFee,
   }
 }
 
@@ -130,6 +130,7 @@ export default {
   deriveWallets: deriveWallets,
   // toEthSignedMessageHash: toEthSignedMessageHash,
 
+  printGas: printGas,
   getOverridesByAskGas: getOverridesByAskGas,
 }
 

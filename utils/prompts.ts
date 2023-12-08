@@ -26,16 +26,29 @@ const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean
 /**
  * Ask for a number
  */
-const askForNumber = async function (hint: string = 'Input a number'): Promise<number> {
+const askForNumber = async function (hint: string = 'Input a number', default_: string = undefined): Promise<number> {
   while (true) {
     const response = await prompts({
-      type: 'number',
+      type: 'text',
       name: 'value',
       message: hint,
+      initial: default_,
+      validate: value => {
+        value = value.trim();
+
+        if (value === '0') return true;
+        if (value === null || value === undefined || value === '') {
+          return 'Please enter a number';
+        }
+        if (isNaN(value)) {
+          return 'Invalid number, please try again';
+        }
+        return true;
+      }
     });
 
     if (response.value) {
-      return parseInt(response.value);
+      return parseInt(response.value.trim());
     }
   }
 }
@@ -138,24 +151,6 @@ const askForPassphrase = async function (): Promise<string> {
   }
 }
 
-/**
- * Ask for the account index
- * 
- * @returns {string} account index
- */
-const askForAccountIndex = async function (hint: string = 'Account#_'): Promise<number> {
-  while (true) {
-    const response = await prompts({
-      type: 'password',
-      name: 'value',
-      message: hint,
-    });
-
-    if (response.value) {
-      return parseInt(response.value);
-    }
-  }
-}
 
 /**
  * Returns true if the address is valid
@@ -267,8 +262,8 @@ const askForTargetAddress = async function (): Promise<string> {
  * Ask for gas
  */
 export const askForGas = async function (): Promise<{
-  maxFee: string;
-  priorityFee: string;
+  maxFee: bigint;
+  priorityFee: bigint;
 }> {
   while (true) {
     const response = await prompts([
@@ -286,9 +281,28 @@ export const askForGas = async function (): Promise<{
 
     if (response.maxFee && response.priorityFee) {
       return {
-        maxFee: response.maxFee,
-        priorityFee: response.priorityFee
+        maxFee: ethers.parseUnits(response.maxFee, "gwei"),
+        priorityFee: ethers.parseUnits(response.priorityFee, "gwei"),
       };
+    }
+  }
+}
+
+/**
+ * Ask for a number
+ */
+const askForNonce = async function (hint_: string = 'Input a number', nonce_: number = 0): Promise<number> {
+  while (true) {
+    const response = await prompts({
+      type: 'number',
+      name: 'value',
+      message: hint_,
+      initial: nonce_,
+      validate: value => (value !== null && value !== undefined && value <= nonce_) ? true : `Must be less than or equal to ${nonce_}`
+    });
+
+    if (response.value) {
+      return parseInt(response.value);
     }
   }
 }
@@ -298,7 +312,6 @@ export default {
   askForNumber: askForNumber,
   askForString: askForString,
   askForPassphrase: askForPassphrase,
-  askForAccountIndex: askForAccountIndex,
 
   askForEvmAddress: askForEvmAddress,
   askForERC20ContractAddress: askForERC20ContractAddress,
@@ -308,4 +321,5 @@ export default {
   askForTargetAddress: askForTargetAddress,
 
   askForGas: askForGas,
+  askForNonce: askForNonce,
 }

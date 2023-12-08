@@ -4,20 +4,9 @@ import prompts from './utils/prompts';
 import CONFIG from './utils/config';
 
 
-const string2hex = (str: string = ''): string => {
-  const res = [];
-  const { length } = str;
-  for (let n = 0, l = length; n < l; n++) {
-    const hex = Number(str.charCodeAt(n)).toString(16);
-    res.push(hex);
-  };
-  return `0x${res.join('')}`;
-}
-
-
 async function main() {
   const INSCRIPTION_DATA = CONFIG.EVM.INSCRIPTION_DATA || await prompts.askForString('Inscription Data');
-  const hexData = string2hex(INSCRIPTION_DATA);
+  const hexData = `0x${Buffer.from(INSCRIPTION_DATA, 'utf8').toString('hex')}`
 
   console.log('');
   console.log('DATA:', INSCRIPTION_DATA);
@@ -27,40 +16,64 @@ async function main() {
   const PROVIDER: ethers.JsonRpcProvider = await fn.getProvider();
   const wallets = await fn.deriveWallets(1);
   const wallet = wallets[0];
-  const walletWithProvider = wallet.connect(PROVIDER);
+
   const balance = await PROVIDER.getBalance(wallet.address);
-  const nonce = await PROVIDER.getTransactionCount(wallet.address);
+  if (balance === BigInt(0)) {
+    console.log('Insufficient balance');
+    process.exit(0);
+  }
 
-  console.log('');
-  console.log(`${wallet.address}: ${ethers.formatUnits(balance, 'ether')}E - #${nonce}`);
+  if (!await prompts.askForConfirm(`Balance: ${ethers.formatUnits(balance, 'ether')} E`)) return;
 
-  const preTx = {
+  const _nonce = await PROVIDER.getTransactionCount(wallet.address);
+  let nonce: number = await prompts.askForNonce('Nonce would start at', _nonce);
+
+
+  const _tx = {
     to: wallet.address,
     value: ethers.parseEther("0"),
     data: hexData,
   }
 
-  const gasLimit = await PROVIDER.estimateGas(preTx);
+  const gasLimit = await PROVIDER.estimateGas(_tx);
 
-  console.log("Gas Limit:", gasLimit);
-
-
-  // console.log('');
-  // console.log('');
-
-  let overrides = await fn.getOverridesByAskGas(preTx);
+  await fn.printGas();
+  const userGas = await prompts.askForGas();
 
 
-  let n: number = nonce;
-  for (let i = 0; i < 3; i++) {
+
+  const overrides = {
+    ..._tx,
+    gasLimit: gasLimit,
+    maxPriorityFeePerGas: userGas.priorityFee,
+    maxFeePerGas: userGas.maxFee,
+  }
+
+  const walletWithProvider = wallet.connect(PROVIDER);
+
+  const spent = BigInt(gasLimit) * userGas.maxFee;
+  const maxAmount = balance / spent;
+  const amount = await prompts.askForNumber(`How many inscriptions do you want, max to ${maxAmount}`);
+
+  const totalSpent = spent * BigInt(amount);
+  if (balance < totalSpent) {
+    console.log('Insufficient balance');
+    return;
+  }
+
+  if (!await prompts.askForConfirm(
+    `Total spent: ${ethers.formatUnits(spent, 'ether')} x ${amount} = ${ethers.formatUnits(totalSpent, 'ether')} E`
+  )) return;
+
+  for (let i = 0; i < amount; i++) {
     const tx = await walletWithProvider.sendTransaction({
       ...overrides,
-      nonce: n,
+      nonce: nonce,
     });
 
-    console.log(n, tx.hash);
+    console.log(nonce, tx.hash);
 
-    n++;
+    nonce++;
   }
 }
 
