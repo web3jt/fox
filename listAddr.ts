@@ -1,10 +1,12 @@
 import { ethers } from 'ethers';
 import fn from './utils/fn';
 import prompts from './utils/prompts';
+import * as qrcode from 'qrcode-terminal';
 
 async function main() {
     const wallets = await fn.deriveWallets(0);
     const needBalance = await prompts.askForConfirm('Check Balance');
+    const needQrCode = await prompts.askForConfirm('Show QR Code');
     let provider: ethers.JsonRpcProvider;
     if (needBalance) {
         provider = await fn.getProvider();
@@ -18,6 +20,10 @@ async function main() {
             console.log(`${address}: ${ethers.formatUnits(balance, 'ether')}E`);
         } else {
             console.log(address);
+        }
+
+        if (needQrCode) {
+            qrcode.generate(address, { small: true });
         }
     }
 
