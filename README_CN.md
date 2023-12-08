@@ -41,8 +41,8 @@ $ code config.yaml
 MNEMONIC: invite adult amount position enable edge song episode cross cotton stand purse
 
 EVM:
-  NETWORK: ETH_SEPOLIA
-  INSCRIPTION_DATA: data:,{"p":"fair-20","op":"mint","tick":"fair","amt":"1000"}
+  NETWORK: BSC_MAINNET
+  INSCRIPTION_DATA: data:,{"p":"bsc-20","op":"mint","tick":"rekt","amt":"1000"}
 
 EVM_NETWORKS:
   ETH_MAINNET: https://eth-mainnet.g.alchemy.com/v2/...
