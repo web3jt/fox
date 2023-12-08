@@ -263,6 +263,36 @@ const askForTargetAddress = async function (): Promise<string> {
   return await askForEvmAddress('Target  Address');
 }
 
+/**
+ * Ask for gas
+ */
+export const askForGas = async function (): Promise<{
+  maxFee: string;
+  priorityFee: string;
+}> {
+  while (true) {
+    const response = await prompts([
+      {
+        type: 'text',
+        name: 'maxFee',
+        message: 'Enter max fee:',
+      },
+      {
+        type: 'text',
+        name: 'priorityFee',
+        message: 'Enter priority fee:',
+      },
+    ]);
+
+    if (response.maxFee && response.priorityFee) {
+      return {
+        maxFee: response.maxFee,
+        priorityFee: response.priorityFee
+      };
+    }
+  }
+}
+
 export default {
   askForConfirm: askForConfirm,
   askForNumber: askForNumber,
@@ -276,4 +306,6 @@ export default {
   askForERC1155ContractAddress: askForERC1155ContractAddress,
   askForSourceAddress: askForSourceAddress,
   askForTargetAddress: askForTargetAddress,
+
+  askForGas: askForGas,
 }

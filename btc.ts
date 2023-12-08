@@ -30,6 +30,18 @@ async function main() {
     return;
   }
 
+  let network = bitcoin.networks.bitcoin;
+  if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'testnet') {
+    network = bitcoin.networks.testnet;
+  } else if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'regtest') {
+    network = bitcoin.networks.regtest;
+  }
+
+  if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
+    console.log('STOPPED')
+    return;
+  }
+
   if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
     console.log('ABANDEND MNEMONIC')
     return;
@@ -48,10 +60,10 @@ async function main() {
     const publicKey = keyPair.publicKey;
     const publicKeyXOnly = toXOnly(publicKey);
 
-    const p2pkh = bitcoin.payments.p2pkh({ pubkey: publicKey });
-    const p2wpkh = bitcoin.payments.p2wpkh({ pubkey: publicKey });
-    const p2sh = bitcoin.payments.p2sh({ redeem: p2wpkh });
-    const p2tr = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly });
+    const p2pkh = bitcoin.payments.p2pkh({ pubkey: publicKey, network: network });
+    const p2wpkh = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: network });
+    const p2sh = bitcoin.payments.p2sh({ redeem: p2wpkh, network: network });
+    const p2tr = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network });
 
     console.log(`            path:`, path);
     console.log(`             WIF:`, wif);

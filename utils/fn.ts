@@ -28,8 +28,11 @@ const touchDir = function (p: string) {
   }
 }
 
+
+const provider = new ethers.JsonRpcProvider(CONFIG.EVM_NETWORKS[CONFIG.EVM.NETWORK]);
+
 const getProvider = async function () {
-  const selected = CONFIG.EVM_NETWORKS.SELECTED;
+  const selected = CONFIG.EVM.NETWORK;
   const confirm = await prompts.askForConfirm(`Use ${selected} network?`);
 
   if (confirm) {
@@ -39,6 +42,8 @@ const getProvider = async function () {
   console.log('');
   process.exit(0);
 }
+
+
 
 /**
  * Get wallets from a BIP39 mnemonic
@@ -93,6 +98,30 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
 //     );
 // }
 
+
+const printGas = async function () {
+  const fee = await provider.getFeeData();
+
+  hint('GAS');
+  console.log(`    Base Fee: ${ethers.formatUnits(fee.gasPrice, "gwei")} GWei`);
+  console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
+  console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
+  console.log('');
+}
+
+
+const getOverridesByAskGas = async function (base_overrides = {}) {
+  await printGas();
+
+  const userGas = await prompts.askForGas();
+  return {
+    ...base_overrides,
+    maxPriorityFeePerGas: ethers.parseUnits(userGas.priorityFee, "gwei"),
+    maxFeePerGas: ethers.parseUnits(userGas.maxFee, "gwei"),
+  }
+}
+
+
 export default {
   hint: hint,
   hi: hi,
@@ -100,5 +129,7 @@ export default {
   getProvider: getProvider,
   deriveWallets: deriveWallets,
   // toEthSignedMessageHash: toEthSignedMessageHash,
+
+  getOverridesByAskGas: getOverridesByAskGas,
 }
 
