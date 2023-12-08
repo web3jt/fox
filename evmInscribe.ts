@@ -69,17 +69,12 @@ async function main() {
   )) return;
 
   for (let i = 0; i < amount; i++) {
-    console.log({
+    const tx = await walletWithProvider.sendTransaction({
       ...overrides,
       nonce: Number(nonce),
     });
 
-    // const tx = await walletWithProvider.sendTransaction({
-    //   ...overrides,
-    //   nonce: Number(nonce),
-    // });
-
-    // console.log(nonce, tx.hash);
+    console.log(nonce, tx.hash);
 
     nonce++;
   }
