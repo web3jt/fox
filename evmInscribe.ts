@@ -8,7 +8,7 @@ async function main() {
   const INSCRIPTION_DATA = CONFIG.EVM.INSCRIPTION_DATA || await prompts.askForString('Inscription Data');
   const hexData = `0x${Buffer.from(INSCRIPTION_DATA, 'utf8').toString('hex')}`
 
-  console.log('');
+  fn.hi('EVM Inscription');
   console.log('DATA:', INSCRIPTION_DATA);
   console.log(' HEX:', hexData);
   console.log('');

@@ -32,6 +32,7 @@ const touchDir = function (p: string) {
 const provider = new ethers.JsonRpcProvider(CONFIG.EVM_NETWORKS[CONFIG.EVM.NETWORK]);
 
 const getProvider = async function () {
+  hi('EVM Network');
   const selected = CONFIG.EVM.NETWORK;
   const confirm = await prompts.askForConfirm(`Use ${selected} network?`);
 
