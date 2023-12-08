@@ -7,10 +7,7 @@ async function main() {
     const wallets = await fn.deriveWallets(0);
     const needBalance = await prompts.askForConfirm('Check Balance');
     const needQrCode = await prompts.askForConfirm('Show QR Code');
-    let provider: ethers.JsonRpcProvider;
-    if (needBalance) {
-        provider = await fn.getProvider();
-    }
+    const provider: ethers.JsonRpcProvider = needBalance ? await fn.getProvider() : undefined;
     console.log('');
 
     for (const wallet of wallets) {
