@@ -5,7 +5,7 @@ config.yaml
 _source
 _outputs
 
-force.js
+force*.ts
 debug.js
 debug.ts
 test.js
