@@ -268,7 +268,7 @@ export const askForGas = async function (fee_ = undefined): Promise<{
   maxFee: bigint | undefined;
   priorityFee: bigint | undefined;
 }> {
-  if (fee_ && !fee_.maxFee) {
+  if (fee_ && !fee_.maxFeePerGas) {
     while (true) {
       const response = await prompts([
         {

@@ -51,6 +51,8 @@ async function main() {
   const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
   const root = bip32.fromSeed(seed);
 
+  const printWif: boolean = await prompts.askForConfirm('Print WIF?');
+
   for (let i = 0; i < 3; i++) {
     console.log(`\n--- ${i} ---`);
     const path = `m/86'/0'/0'/0/${i}`;
@@ -66,7 +68,7 @@ async function main() {
     const p2tr = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network });
 
     console.log(`            path:`, path);
-    console.log(`             WIF:`, wif);
+    if (printWif) console.log(`             WIF:`, `${wif.slice(4)}   <<<   ${wif.slice(0, 4)}`);
     console.log('p2pkh  (Legacy) :', p2pkh.address);
     console.log('p2wpkh (SegWit) :', p2wpkh.address);
     console.log('p2sh   (P2SH)   :', p2sh.address);

@@ -41,16 +41,16 @@ async function main() {
   const userGas = await prompts.askForGas(fee);
 
 
-  const overrides = userGas.maxFee !== undefined ? {
+  const overrides = userGas.maxFee === undefined ? {
+    ..._tx,
+    gasLimit: gasLimit,
+    gasPrice: userGas.gasPrice,
+  } : {
     ..._tx,
     gasLimit: gasLimit,
     maxPriorityFeePerGas: userGas.priorityFee,
     maxFeePerGas: userGas.maxFee,
-  } : {
-    ..._tx,
-    gasLimit: gasLimit,
-    gasPrice: userGas.gasPrice,
-  }
+  };
 
   const walletWithProvider = wallet.connect(PROVIDER);
 
