@@ -3,6 +3,10 @@ import fs from 'fs';
 import prompts from './prompts';
 import CONFIG from './config';
 
+const sleep = async function (ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 const hint = function (hintString: string = '', targetLength: number = 6) {
   if (0 < targetLength) {
@@ -126,6 +130,7 @@ const getOverridesByAskGas = async function (base_overrides = {}) {
 
 
 export default {
+  sleep: sleep,
   hint: hint,
   hi: hi,
   touchDir: touchDir,

@@ -17,27 +17,11 @@ async function main() {
   const wallets = await fn.deriveWallets(1);
   const wallet = wallets[0];
 
-  let balance = await PROVIDER.getBalance(wallet.address);
+  const balance = ethers.parseUnits((await prompts.askForNumber('balance')).toString(), "ether");
   console.log('Balance:', ethers.formatUnits(balance, 'ether'), 'E');
 
-  if (balance === BigInt(0)) {
-    if (await prompts.askForConfirm('Is there a RPC problem? so, keep watching?')) {
-      while (balance === BigInt(0)) {
-        await fn.sleep(3000);
-        balance = await PROVIDER.getBalance(wallet.address);
-        console.log('Balance:', ethers.formatUnits(balance, 'ether'), 'E');
-      }
-    } else {
-      console.log('Insufficient balance');
-      process.exit(0);
-    }
-  }
-
-
   if (!await prompts.askForConfirm(`Balance: ${ethers.formatUnits(balance, 'ether')} E`)) return;
-
-  const _nonce = await PROVIDER.getTransactionCount(wallet.address);
-  let nonce: bigint = await prompts.askForNonce('Nonce would start at', _nonce.toString());
+  let nonce: bigint = BigInt('2934');
 
 
   const _tx = {
@@ -50,7 +34,6 @@ async function main() {
 
   const fee = await fn.getGasFeeData();
   const userGas = await prompts.askForGas(fee);
-
 
   const overrides = userGas.maxFee === undefined ? {
     ..._tx,
