@@ -1,7 +1,22 @@
 import { ethers } from 'ethers';
+import { Payment } from 'bitcoinjs-lib';
+
 import fs from 'fs';
 import prompts from './prompts';
 import CONFIG from './config';
+
+import * as ecc from 'tiny-secp256k1';
+import * as bitcoin from 'bitcoinjs-lib';
+import BIP32Factory, { BIP32Interface } from 'bip32';
+import * as bip39 from 'bip39';
+
+
+const bip32 = BIP32Factory(ecc);
+
+bitcoin.initEccLib(ecc);
+
+export const toXOnly = (publicKey: Buffer) => publicKey.subarray(1, 33);
+
 
 const sleep = async function (ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -88,6 +103,85 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
   process.exit(0);
 }
 
+interface BitcoinWallet {
+  path: string,
+  keyPair: BIP32Interface,
+  p2pkh: Payment,
+  p2wpkh: Payment,
+  p2sh: Payment,
+  p2tr: Payment,
+}
+
+const deriveBitcoinWallets = async function (amount: number = 20): Promise<BitcoinWallet[]> {
+  const wallets: BitcoinWallet[] = [];
+
+  hi('Derive Bitcoin Wallet Accounts');
+
+  const MNEMONIC = CONFIG['MNEMONIC'];
+
+  const WORDS = MNEMONIC.split(' ');
+  if (12 !== WORDS.length) {
+    console.log('INVALID MNEMONIC')
+    return;
+  }
+
+  const VALID = bip39.validateMnemonic(MNEMONIC);
+  if (!VALID) {
+    console.log('INVALID MNEMONIC')
+    return;
+  }
+
+  let network = bitcoin.networks.bitcoin;
+  if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'testnet') {
+    network = bitcoin.networks.testnet;
+  } else if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'regtest') {
+    network = bitcoin.networks.regtest;
+  }
+
+  if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
+    console.log('STOPPED')
+    return;
+  }
+
+  if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
+    console.log('ABANDEND MNEMONIC')
+    return;
+  }
+
+  const passphrase = await prompts.askForPassphrase();
+  const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
+  const root: BIP32Interface = bip32.fromSeed(seed);
+
+  for (let i = 0; i < amount; i++) {
+    const path = `m/86'/0'/0'/0/${i}`;
+    const keyPair = root.derivePath(path);
+
+    const publicKey = keyPair.publicKey;
+    const publicKeyXOnly = toXOnly(publicKey);
+
+    const p2pkh: Payment = bitcoin.payments.p2pkh({ pubkey: publicKey, network: network });
+    const p2wpkh: Payment = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: network });
+    const p2sh: Payment = bitcoin.payments.p2sh({ redeem: p2wpkh, network: network });
+    const p2tr: Payment = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network });
+
+    wallets.push({
+      path: path,
+      keyPair: keyPair,
+      p2pkh: p2pkh,
+      p2wpkh: p2wpkh,
+      p2sh: p2sh,
+      p2tr: p2tr,
+    });
+  }
+
+  if (0 < wallets.length) {
+    return wallets;
+  }
+
+  console.log('');
+  process.exit(0);
+}
+
 // /**
 //  * Convert a message hash to an Ethereum Signed Message hash
 //  * 
@@ -130,12 +224,16 @@ const getOverridesByAskGas = async function (base_overrides = {}) {
 
 
 export default {
+  toXOnly: toXOnly,
   sleep: sleep,
   hint: hint,
   hi: hi,
   touchDir: touchDir,
   getProvider: getProvider,
   deriveWallets: deriveWallets,
+
+  deriveBitcoinWallets: deriveBitcoinWallets,
+
   // toEthSignedMessageHash: toEthSignedMessageHash,
 
   getGasFeeData: getGasFeeData,
