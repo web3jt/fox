@@ -83,16 +83,7 @@ async function main() {
   console.log(finalTxHex);
 
   const finalTxSize = finalTxHex.length / 2;
-
-  console.log(`\nfinal size: ${finalTxSize}\n`);
-
-  const fee = psbt.getFee();
-  const feeRate = psbt.getFeeRate();
-
-  console.log(`fee: ${fee}`);
-  console.log(`fee rate: ${feeRate}`);
+  console.log(`\n    final size: ${finalTxSize}\n`);
 }
 
 main();
-
-
