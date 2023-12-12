@@ -8,7 +8,9 @@ import CONFIG from './config';
 import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
 import BIP32Factory, { BIP32Interface } from 'bip32';
+import { Signer } from 'bip32/types/bip32';
 import * as bip39 from 'bip39';
+import { get } from 'http';
 
 
 const bip32 = BIP32Factory(ecc);
@@ -110,6 +112,24 @@ interface BitcoinWallet {
   p2wpkh: Payment,
   p2sh: Payment,
   p2tr: Payment,
+  p2trInternalKey: Buffer,
+  p2trSigner: Signer,
+}
+
+const getBitcoinNetwork = function () {
+  let network = bitcoin.networks.bitcoin;
+  if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'testnet') {
+    network = bitcoin.networks.testnet;
+  } else if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'regtest') {
+    network = bitcoin.networks.regtest;
+  }
+  return network;
+}
+
+const askForBitcoinNetwork = async function () {
+  if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) process.exit(0);
+
+  return getBitcoinNetwork();
 }
 
 const deriveBitcoinWallets = async function (amount: number = 20): Promise<BitcoinWallet[]> {
@@ -131,12 +151,7 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
     return;
   }
 
-  let network = bitcoin.networks.bitcoin;
-  if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'testnet') {
-    network = bitcoin.networks.testnet;
-  } else if (CONFIG['BITCOIN']['NETWORK'].toLowerCase() === 'regtest') {
-    network = bitcoin.networks.regtest;
-  }
+  const network = getBitcoinNetwork();
 
   if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
     console.log('STOPPED')
@@ -164,6 +179,10 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
     const p2sh: Payment = bitcoin.payments.p2sh({ redeem: p2wpkh, network: network });
     const p2tr: Payment = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network });
 
+    const p2trSigner = keyPair.tweak(
+      bitcoin.crypto.taggedHash('TapTweak', publicKeyXOnly),
+    );
+
     wallets.push({
       path: path,
       keyPair: keyPair,
@@ -171,6 +190,8 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
       p2wpkh: p2wpkh,
       p2sh: p2sh,
       p2tr: p2tr,
+      p2trInternalKey: publicKeyXOnly,
+      p2trSigner: p2trSigner,
     });
   }
 
@@ -238,5 +259,9 @@ export default {
 
   getGasFeeData: getGasFeeData,
   getOverridesByAskGas: getOverridesByAskGas,
+
+  getBitcoinNetwork: getBitcoinNetwork,
+
+  askForBitcoinNetwork: askForBitcoinNetwork,
 }
 
