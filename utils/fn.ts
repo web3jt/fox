@@ -87,7 +87,7 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
       const accountStart = baseWallet.deriveChild(accountIndex);
       if (await prompts.askForConfirm(`Account#${accountIndex}: ${accountStart.address}`)) {
         if (0 === amount) {
-          amount = await prompts.askForNumber('Amount');
+          amount = await prompts.askForNumber('How many accounts would you like to derive');
         }
 
         for (let i = accountIndex; i < accountIndex + amount; i++) {
