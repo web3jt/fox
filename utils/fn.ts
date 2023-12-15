@@ -1,9 +1,12 @@
 import { ethers } from 'ethers';
 import { Payment } from 'bitcoinjs-lib';
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import CryptoJS from 'crypto-js';
 import Arweave from 'arweave';
+import { JWKInterface } from 'arweave/web/lib/wallet';
 
 import fs from 'fs';
+import path from 'path';
 import prompts from './prompts';
 import CONFIG from './config';
 
@@ -48,6 +51,23 @@ const touchDir = function (p: string) {
     }
   }
 }
+
+/**
+ * AES encrypt / decrypt
+ */
+export const aesEncrypt = function (data: string, key: string): string {
+  return CryptoJS.AES.encrypt(data, key).toString();
+}
+
+export const aesDecrypt = function (ciphertext: string, key: string): string {
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    return undefined;
+  }
+}
+
 
 
 const provider = new ethers.JsonRpcProvider(CONFIG.EVM_NETWORKS[CONFIG.EVM.NETWORK]);
@@ -205,67 +225,6 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
 }
 
 
-interface ArweaveWallet {
-  path: string,
-  keyPair: BIP32Interface,
-  addres: String,
-}
-
-// const deriveArweaveWallets = async function (amount: number = 20): Promise<ArweaveWallet[]> {
-//   const wallets: ArweaveWallet[] = [];
-
-//   hi('Derive Arweave Wallet Accounts');
-
-//   const MNEMONIC = CONFIG['MNEMONIC'];
-
-//   const WORDS = MNEMONIC.split(' ');
-//   if (12 !== WORDS.length) {
-//     console.log('INVALID MNEMONIC')
-//     process.exit(0);
-//   }
-
-//   const VALID = bip39.validateMnemonic(MNEMONIC);
-//   if (!VALID) {
-//     console.log('INVALID MNEMONIC')
-//     process.exit(0);
-//   }
-
-//   const network = getBitcoinNetwork();
-
-//   if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
-//     console.log('STOPPED')
-//     process.exit(0);
-//   }
-
-//   if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
-//     console.log('ABANDEND MNEMONIC')
-//     process.exit(0);
-//   }
-
-//   const passphrase = await prompts.askForPassphrase();
-//   const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
-//   const root: BIP32Interface = bip32.fromSeed(seed);
-
-//   for (let i = 0; i < amount; i++) {
-//     const path = `m/472'/0'/0'/0/${i}`;
-//     const keyPair = root.derivePath(path);
-
-//     const address = await arweave.wallets.jwkToAddress(keyPair.privateKey.);
-
-//     wallets.push({
-//       path: path,
-//       keyPair: keyPair,
-//       addres: '',
-//     });
-//   }
-
-//   if (0 < wallets.length) {
-//     return wallets;
-//   }
-
-//   console.log('');
-//   process.exit(0);
-// }
 
 // /**
 //  * Convert a message hash to an Ethereum Signed Message hash
@@ -276,11 +235,59 @@ interface ArweaveWallet {
 //  * @see https://eips.ethereum.org/EIPS/eip-191
 //  */
 // function toEthSignedMessageHash(messageHash: string): string {
-//     return ethers.utils.solidityKeccak256(
-//         ['string', 'bytes32'],
-//         ['\x19Ethereum Signed Message:\n32', messageHash]
-//     );
+//   return ethers.utils.solidityKeccak256(
+//     ['string', 'bytes32'],
+//     ['\x19Ethereum Signed Message:\n32', messageHash]
+//   );
 // }
+
+
+
+
+const _getArKey = async function (i_: number, passphrase_: string): Promise<JWKInterface> {
+  const f = path.join(__dirname, `../arkeys/${i_}.dat`);
+
+  if (fs.existsSync(f)) {
+    const encryptedJSON = fs.readFileSync(f, 'utf8');
+    const decryptedJSON = aesDecrypt(encryptedJSON, passphrase_);
+    if (decryptedJSON) return JSON.parse(decryptedJSON);
+    return undefined;
+  }
+
+  const key = await arweave.wallets.generate();
+  const keyJSON = JSON.stringify(key);
+  const encryptedKey = aesEncrypt(keyJSON, passphrase_);
+  fs.writeFileSync(f, encryptedKey, 'utf8');
+  return key;
+}
+
+interface ArWallet {
+  key: JWKInterface,
+  address: string,
+}
+
+export const getArWallets = async function (amount_: number = undefined): Promise<ArWallet[]> {
+  const rlt: ArWallet[] = [];
+
+  hi('--------- --------- generate/load Arweave wallet --------- ---------');
+  const passphrase = await prompts.askForPassphrase('Please input passphrase for encrypting/decrypting Arweave wallet');
+  const amount = amount_ || await prompts.askForNumber('How many wallets do you want to generate/load', '1');
+
+  for (let i = 0; i < amount; i++) {
+    const key = await _getArKey(i, passphrase);
+    if (undefined === key) {
+      console.log(`Failed to load key #${i}`);
+      return rlt;
+    }
+
+    rlt.push({
+      key: key,
+      address: await arweave.wallets.jwkToAddress(key)
+    });
+  }
+
+  return rlt;
+}
 
 
 const getGasFeeData = async function () {

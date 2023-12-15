@@ -46,7 +46,8 @@ async function main() {
     data: hexData,
   }
 
-  const gasLimit = await PROVIDER.estimateGas(_tx);
+  const gasLimit = 21960;
+  // const gasLimit = await PROVIDER.estimateGas(_tx);
 
   const fee = await fn.getGasFeeData();
   const userGas = await prompts.askForGas(fee);

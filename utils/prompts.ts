@@ -136,12 +136,12 @@ export const getDirs = async function (dir: string = ''): Promise<string[]> {
  * 
  * @see https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed
  */
-const askForPassphrase = async function (): Promise<string> {
+const askForPassphrase = async function (hint_: string = 'BIP39 Passphrase'): Promise<string> {
   while (true) {
     const response = await prompts({
       type: 'password',
       name: 'value',
-      message: 'BIP39 Passphrase',
+      message: hint_,
       // validate: (value: string) => 8 > value.length ? 'Too short' : true
     });
 

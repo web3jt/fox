@@ -1,7 +1,10 @@
 import fn from './utils/fn';
 
 async function main() {
-  const fee = await fn.getGasFeeData();
+  while (true) {
+    await fn.getGasFeeData();
+    await fn.sleep(1000);
+  }
 }
 
 main();
