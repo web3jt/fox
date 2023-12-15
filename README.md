@@ -4,12 +4,12 @@
 
 - [newMnemonic](./md/newMnemonic.md)<br>
   make a new Mnemonic
-- [listAddr](./md/listAddr.md)<br>
-  list accounts from `Mnemonic` + `Password` and `Account Index`
-- [listPriv](./md/listPriv.md)<br>
-  list accounts and private keys from ...
+- [evmAddr](./md/listAddr.md)<br>
+  list accounts from `Mnemonic` + `Password` and `Account Index`, will ask if you need balance query or the private key
 - [newIdents](./md/idents.md)<br>
   generate random profiles
+
+
 - **list721alchemy.ts**<br>
   list ERC721 NFTs for target address using [Alchemy SDK](https://github.com/alchemyplatform/alchemy-sdk-js)
 - **list721ethers.ts**<br>

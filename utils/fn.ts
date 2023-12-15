@@ -1,5 +1,7 @@
 import { ethers } from 'ethers';
 import { Payment } from 'bitcoinjs-lib';
+import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371';
+import Arweave from 'arweave';
 
 import fs from 'fs';
 import prompts from './prompts';
@@ -16,8 +18,6 @@ import { get } from 'http';
 const bip32 = BIP32Factory(ecc);
 
 bitcoin.initEccLib(ecc);
-
-export const toXOnly = (publicKey: Buffer) => publicKey.subarray(1, 33);
 
 
 const sleep = async function (ms: number) {
@@ -105,16 +105,6 @@ const deriveWallets = async function (amount: number = 20): Promise<ethers.HDNod
   process.exit(0);
 }
 
-interface BitcoinWallet {
-  path: string,
-  keyPair: BIP32Interface,
-  p2pkh: Payment,
-  p2wpkh: Payment,
-  p2sh: Payment,
-  p2tr: Payment,
-  p2trInternalKey: Buffer,
-  p2trSigner: Signer,
-}
 
 const getBitcoinNetwork = function () {
   let network = bitcoin.networks.bitcoin;
@@ -132,6 +122,17 @@ const askForBitcoinNetwork = async function () {
   return getBitcoinNetwork();
 }
 
+interface BitcoinWallet {
+  path: string,
+  keyPair: BIP32Interface,
+  p2pkh: Payment,
+  p2wpkh: Payment,
+  p2sh: Payment,
+  p2tr: Payment,
+  p2trInternalKey: Buffer,
+  p2trSigner: Signer,
+}
+
 const deriveBitcoinWallets = async function (amount: number = 20): Promise<BitcoinWallet[]> {
   const wallets: BitcoinWallet[] = [];
 
@@ -142,25 +143,25 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
   const WORDS = MNEMONIC.split(' ');
   if (12 !== WORDS.length) {
     console.log('INVALID MNEMONIC')
-    return;
+    process.exit(0);
   }
 
   const VALID = bip39.validateMnemonic(MNEMONIC);
   if (!VALID) {
     console.log('INVALID MNEMONIC')
-    return;
+    process.exit(0);
   }
 
   const network = getBitcoinNetwork();
 
   if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
     console.log('STOPPED')
-    return;
+    process.exit(0);
   }
 
   if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
     console.log('ABANDEND MNEMONIC')
-    return;
+    process.exit(0);
   }
 
   const passphrase = await prompts.askForPassphrase();
@@ -203,6 +204,69 @@ const deriveBitcoinWallets = async function (amount: number = 20): Promise<Bitco
   process.exit(0);
 }
 
+
+interface ArweaveWallet {
+  path: string,
+  keyPair: BIP32Interface,
+  addres: String,
+}
+
+// const deriveArweaveWallets = async function (amount: number = 20): Promise<ArweaveWallet[]> {
+//   const wallets: ArweaveWallet[] = [];
+
+//   hi('Derive Arweave Wallet Accounts');
+
+//   const MNEMONIC = CONFIG['MNEMONIC'];
+
+//   const WORDS = MNEMONIC.split(' ');
+//   if (12 !== WORDS.length) {
+//     console.log('INVALID MNEMONIC')
+//     process.exit(0);
+//   }
+
+//   const VALID = bip39.validateMnemonic(MNEMONIC);
+//   if (!VALID) {
+//     console.log('INVALID MNEMONIC')
+//     process.exit(0);
+//   }
+
+//   const network = getBitcoinNetwork();
+
+//   if (!await prompts.askForConfirm(`Network: ${CONFIG['BITCOIN']['NETWORK']}`)) {
+//     console.log('STOPPED')
+//     process.exit(0);
+//   }
+
+//   if (!await prompts.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
+//     console.log('ABANDEND MNEMONIC')
+//     process.exit(0);
+//   }
+
+//   const passphrase = await prompts.askForPassphrase();
+//   const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
+//   const root: BIP32Interface = bip32.fromSeed(seed);
+
+//   for (let i = 0; i < amount; i++) {
+//     const path = `m/472'/0'/0'/0/${i}`;
+//     const keyPair = root.derivePath(path);
+
+//     const address = await arweave.wallets.jwkToAddress(keyPair.privateKey.);
+
+//     wallets.push({
+//       path: path,
+//       keyPair: keyPair,
+//       addres: '',
+//     });
+//   }
+
+//   if (0 < wallets.length) {
+//     return wallets;
+//   }
+
+//   console.log('');
+//   process.exit(0);
+// }
+
 // /**
 //  * Convert a message hash to an Ethereum Signed Message hash
 //  * 
@@ -224,8 +288,8 @@ const getGasFeeData = async function () {
 
   hint('Current GAS Data');
   console.log(`    Base Fee: ${ethers.formatUnits(fee.gasPrice, "gwei")} GWei`);
-  if (fee.maxPriorityFeePerGas) console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
-  if (fee.maxFeePerGas) console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
+  if (undefined !== fee.maxPriorityFeePerGas) console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
+  if (undefined !== fee.maxFeePerGas) console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
   console.log('');
 
   return fee;
@@ -244,7 +308,17 @@ const getOverridesByAskGas = async function (base_overrides = {}) {
 }
 
 
+
+
+const arweave = Arweave.init({
+  host: CONFIG.ARWEAVE.HOST || 'arweave.net',
+  port: CONFIG.ARWEAVE.PORT || 443,
+  protocol: CONFIG.ARWEAVE.PROTOCOL || 'https',
+});
+
+
 export default {
+  arweave: arweave,
   toXOnly: toXOnly,
   sleep: sleep,
   hint: hint,

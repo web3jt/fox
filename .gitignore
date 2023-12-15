@@ -1,9 +1,13 @@
+ar*
+ord*
+
 config.yaml
 
 .DS_Store
 .idea
 _source
 _outputs
+tmp*
 
 force*.ts
 debug.js
