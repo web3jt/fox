@@ -1,12 +1,17 @@
 MNEMONIC: invite adult amount position enable edge song episode cross cotton stand purse
 
 EVM:
-  NETWORK: BSC_MAINNET
-  INSCRIPTION_DATA: data:,{"p":"bsc-20","op":"mint","tick":"rekt","amt":"1000"}
+  NETWORK: AVAX
+  INSCRIPTION_DATA: data:,{"p":"fair-20","op":"mint","tick":"fair","amt":"1000"}
 
 EVM_NETWORKS:
   ETH_MAINNET: https://eth-mainnet.g.alchemy.com/v2/...
   ETH_SEPOLIA: https://eth-sepolia.g.alchemy.com/v2/...
   BSC_MAINNET: https://bsc-dataseed.binance.org
-  POLYGON_MAINNET: https://polygon-rpc.com
-  ETHW: "https://mainnet.ethereumpow.org"
+  # POLYGON_MAINNET: https://polygon-rpc.com
+  POLYGON_MAINNET: https://polygon-pokt.nodies.app
+  # ETHW: https://mainnet.ethereumpow.org
+  ETHW: https://rpc3.yayasea.com
+  OKTC: https://1rpc.io/oktc
+  AVAX: https://avalanche.drpc.org
+  ARB: https://arbitrum.llamarpc.com
