@@ -39,15 +39,15 @@ async function main() {
   const _nonce = await PROVIDER.getTransactionCount(wallet.address);
   let nonce: bigint = await prompts.askForNonce('Nonce would start at', _nonce.toString());
 
-
   const _tx = {
     to: wallet.address,
     value: ethers.parseEther("0"),
     data: hexData,
   }
 
-  const gasLimit = 21960;
-  // const gasLimit = await PROVIDER.estimateGas(_tx);
+  const gasLimit = await PROVIDER.estimateGas(_tx);
+
+  if (!await prompts.askForConfirm(`Gas Limit: ${gasLimit}`)) return;
 
   const fee = await fn.getGasFeeData();
   const userGas = await prompts.askForGas(fee);
