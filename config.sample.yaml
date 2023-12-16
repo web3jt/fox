@@ -15,3 +15,13 @@ EVM_NETWORKS:
   OKTC: https://1rpc.io/oktc
   AVAX: https://avalanche.drpc.org
   ARB: https://arbitrum.llamarpc.com
+
+
+ARWEAVE:
+  HOST: arweave.net
+  PORT: 443
+  PROTOCOL: https
+
+  INSCRIPTION_TARGET: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  INSCRIPTION_PROTOCOL: prc-20
+  INSCRIPTION_TICK: aris

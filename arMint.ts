@@ -3,14 +3,18 @@ import prompts from './utils/prompts';
 import CONFIG from './utils/config';
 
 
-const TARGET = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-
-const JSON_MINT = { "p": "prc-20", "op": "mint", "tick": CONFIG.ARWEAVE.INSCRIPTION_TICK, "amt": "1000" };
+const JSON_MINT = { "p": CONFIG.ARWEAVE.INSCRIPTION_PROTOCOL, "op": "mint", "tick": CONFIG.ARWEAVE.INSCRIPTION_TICK, "amt": "1000" };
 const JSON_MINT_STRING = JSON.stringify(JSON_MINT);
+
 
 async function main() {
   const wallets = await getArWallets(1);
   const wallet = wallets?.[0];
+
+  if (!wallet) {
+    console.log('Failed to get wallet');
+    return;
+  }
 
   const key = wallet.key;
   const address = wallet.address;
@@ -25,7 +29,7 @@ async function main() {
 
   for (let i = 0; i < amount; i++) {
     const tx = await arweave.createTransaction({
-      target: TARGET,
+      target: CONFIG.ARWEAVE.INSCRIPTION_TARGET,
       quantity: arweave.ar.arToWinston('0'),
       data: JSON_MINT_STRING,
     }, key);
