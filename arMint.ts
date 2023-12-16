@@ -1,14 +1,14 @@
-import fn, { getArWallets } from './utils/fn';
+import { arweave, getArWallets } from './utils/ar';
 import prompts from './utils/prompts';
 import CONFIG from './utils/config';
 
-const arweave = fn.arweave;
 
 const TARGET = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
-async function main() {
-  const content = CONFIG.ARWEAVE.INSCRIPTION_DATA;
+const JSON_MINT = { "p": "prc-20", "op": "mint", "tick": CONFIG.ARWEAVE.INSCRIPTION_TICK, "amt": "1000" };
+const JSON_MINT_STRING = JSON.stringify(JSON_MINT);
 
+async function main() {
   const wallets = await getArWallets(1);
   const wallet = wallets?.[0];
 
@@ -27,7 +27,7 @@ async function main() {
     const tx = await arweave.createTransaction({
       target: TARGET,
       quantity: arweave.ar.arToWinston('0'),
-      data: content,
+      data: JSON_MINT_STRING,
     }, key);
     tx.addTag('Content-Type', 'application/json');
     await arweave.transactions.sign(tx, key);
