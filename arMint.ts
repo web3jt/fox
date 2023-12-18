@@ -30,7 +30,7 @@ async function main() {
   for (let i = 0; i < amount; i++) {
     const tx = await arweave.createTransaction({
       target: CONFIG.ARWEAVE.INSCRIPTION_TARGET,
-      quantity: arweave.ar.arToWinston('0'),
+      quantity: arweave.ar.arToWinston('0.01'),
       data: JSON_MINT_STRING,
     }, key);
     tx.addTag('Content-Type', 'application/json');
