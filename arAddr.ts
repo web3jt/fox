@@ -1,9 +1,7 @@
-import fn, { getArWallets } from './utils/fn';
+import { arweave, getArWallets } from './utils/ar';
 import prompts from './utils/prompts';
 import CONFIG from './utils/config';
 import * as qrcode from 'qrcode-terminal';
-
-const arweave = fn.arweave;
 
 async function main() {
   const wallets = await getArWallets();
