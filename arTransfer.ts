@@ -31,25 +31,22 @@ async function main() {
   console.log(text.join(' :: '));
 
 
-  const amount = await prompts.askForNumber('How much txs do you want to mint');
+  const tx = await arweave.createTransaction({
+    target: CONFIG.ARWEAVE.INSCRIPTION_TARGET,
+    quantity: arweave.ar.arToWinston('0'),
+    data: JSON_MINT_STRING,
+  }, key);
+  tx.addTag('Content-Type', 'application/json');
+  await arweave.transactions.sign(tx, key);
 
-  for (let i = 0; i < amount; i++) {
-    const tx = await arweave.createTransaction({
-      target: CONFIG.ARWEAVE.INSCRIPTION_TARGET,
-      quantity: arweave.ar.arToWinston('0'),
-      data: JSON_MINT_STRING,
-    }, key);
-    tx.addTag('Content-Type', 'application/json');
-    await arweave.transactions.sign(tx, key);
-
-    const response = await arweave.transactions.post(tx);
-    if (200 !== response.status) {
-      console.log('Error when posting tx');
-      return;
-    }
-    console.log(i, tx.id);
+  const response = await arweave.transactions.post(tx);
+  if (200 !== response.status) {
+    console.log('Error when posting tx');
+    return;
   }
+  console.log(tx.id);
 
+  console.log();
   /**
    * big tx, upload it
    */
