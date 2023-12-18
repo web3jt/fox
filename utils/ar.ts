@@ -40,8 +40,8 @@ export const getArWallets = async function (amount_: number = undefined): Promis
   for (let i = 0; i < amount; i++) {
     const key = await _getArKey(i, passphrase);
     if (undefined === key) {
-      console.log(`Failed to load key #${i} stop here...`);
-      return rlt;
+      console.log(`Failed to load key #${i}\n`);
+      process.exit(0);
     }
 
     rlt.push({
