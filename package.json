@@ -1,5 +1,9 @@
 {
-  "dependencies": {},
+  "dependencies": {
+    "@project-serum/borsh": "^0.2.5",
+    "@solana/web3.js": "^1.87.6",
+    "@thirdweb-dev/solana": "^0.2.15"
+  },
   "devDependencies": {
     "@cmdcode/buff-utils": "^2.0.0",
     "@cmdcode/crypto-tools": "^2.6.10",
