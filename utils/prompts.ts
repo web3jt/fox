@@ -7,12 +7,12 @@ import CONFIG from './config';
 /**
  * Ask for a confirmation
  */
-const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean> {
+const askForConfirm = async function (message_: string = 'Confirm'): Promise<boolean> {
   while (true) {
     const response = await prompts({
       type: 'text',
       name: 'value',
-      message: `${hint} (y/N)`,
+      message: `${message_} (y/N)`,
     });
 
     if (response.value) {
@@ -26,12 +26,12 @@ const askForConfirm = async function (hint: string = 'Confirm'): Promise<boolean
 /**
  * Ask for a number
  */
-const askForNumber = async function (hint: string = 'Input a number', default_: string = undefined): Promise<number> {
+const askForNumber = async function (message_: string = 'Input a number', default_: string = undefined): Promise<number> {
   while (true) {
     const response = await prompts({
       type: 'text',
       name: 'value',
-      message: hint,
+      message: message_,
       initial: default_,
       validate: value => {
         value = value.trim();
@@ -58,12 +58,12 @@ const askForNumber = async function (hint: string = 'Input a number', default_: 
 /**
  * Ask for a string
  */
-export const askForString = async function (hint: string = "Input a string"): Promise<string> {
+export const askForString = async function (message_: string = "Input a string"): Promise<string> {
   while (true) {
     const response = await prompts({
       type: 'text',
       name: 'value',
-      message: hint,
+      message: message_,
     });
 
     if (response.value) {
@@ -76,12 +76,12 @@ export const askForString = async function (hint: string = "Input a string"): Pr
 /**
  * Ask for a path
  */
-export const askForPath = async function (hint: string = "Input a path"): Promise<string> {
+export const askForPath = async function (message_: string = "Input a path"): Promise<string> {
   while (true) {
     const response = await prompts({
       type: 'text',
       name: 'value',
-      message: hint,
+      message: message_,
       validate: (value) => {
         if (!fs.existsSync(value)) return `Path ${value} does not exist`;
         if (!fs.lstatSync(value).isDirectory()) return `Path ${value} is not a directory`;
@@ -94,32 +94,32 @@ export const askForPath = async function (hint: string = "Input a path"): Promis
   }
 }
 
-export const getFiles = async function (extname: string = '', dir: string = ''): Promise<string[]> {
-  if (!dir) dir = await askForPath(`${extname} dir`);
+export const getFiles = async function (extname_: string = '', dir_: string = ''): Promise<string[]> {
+  if (!dir_) dir_ = await askForPath(`${extname_} dir`);
 
   const files: string[] = [];
-  const _files = fs.readdirSync(dir);
+  const _files = fs.readdirSync(dir_);
   _files.forEach((file, i) => {
-    const p2f = path.join(dir, file);
+    const p2f = path.join(dir_, file);
     if (fs.lstatSync(p2f).isDirectory()) return;
     if (file.startsWith('_') || file.startsWith('.')) return;
-    if (extname) {
-      if (path.extname(p2f) !== extname) return;
+    if (extname_) {
+      if (path.extname(p2f) !== extname_) return;
     }
     files.push(p2f);
   });
 
-  console.log(`\nFound ${files.length} ${extname} files...\n`);
+  console.log(`\nFound ${files.length} ${extname_} files...\n`);
   return files;
 }
 
-export const getDirs = async function (dir: string = ''): Promise<string[]> {
-  if (!dir) dir = await askForPath(`input dir`);
+export const getDirs = async function (dir_: string = ''): Promise<string[]> {
+  if (!dir_) dir_ = await askForPath(`input dir`);
 
   const files: string[] = [];
-  const _files = fs.readdirSync(dir);
+  const _files = fs.readdirSync(dir_);
   _files.forEach((file, i) => {
-    const p2f = path.join(dir, file);
+    const p2f = path.join(dir_, file);
     if (fs.lstatSync(p2f).isFile()) return;
     if (file.startsWith('_') || file.startsWith('.')) return;
     files.push(p2f);
@@ -136,12 +136,12 @@ export const getDirs = async function (dir: string = ''): Promise<string[]> {
  * 
  * @see https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed
  */
-const askForPassphrase = async function (hint_: string = 'BIP39 Passphrase'): Promise<string> {
+const askForPassphrase = async function (message_: string = 'BIP39 Passphrase'): Promise<string> {
   while (true) {
     const response = await prompts({
       type: 'password',
       name: 'value',
-      message: hint_,
+      message: message_,
       // validate: (value: string) => 8 > value.length ? 'Too short' : true
     });
 
@@ -157,9 +157,9 @@ const askForPassphrase = async function (hint_: string = 'BIP39 Passphrase'): Pr
 /**
  * Returns true if the address is valid
  */
-const _isAddress = function (address: string): boolean {
+const _isAddress = function (address_: string): boolean {
   try {
-    ethers.getAddress(address);
+    ethers.getAddress(address_);
     return true;
   } catch (e) {
     return false;
@@ -169,11 +169,11 @@ const _isAddress = function (address: string): boolean {
 /**
  * Ask for an EVM address
  */
-const askForEvmAddress = async function (hint: string = 'Address'): Promise<string> {
+const askForEvmAddress = async function (message_: string = 'Address'): Promise<string> {
   const response = await prompts({
     type: 'text',
     name: 'value',
-    message: hint,
+    message: message_,
     validate: (value: string) => _isAddress(value) ? true : 'Invalid address'
   });
 
@@ -315,12 +315,12 @@ export const askForGas = async function (fee_ = undefined): Promise<{
 /**
  * Ask for a number
  */
-const askForNonce = async function (hint_: string = 'Input a number', nonce_: string = '0'): Promise<bigint> {
+const askForNonce = async function (message_: string = 'Input a number', nonce_: string = '0'): Promise<bigint> {
   while (true) {
     const response = await prompts({
       type: 'text',
       name: 'value',
-      message: hint_,
+      message: message_,
       initial: nonce_,
       validate: value => {
         value = value.trim();
@@ -351,6 +351,7 @@ const askForNonce = async function (hint_: string = 'Input a number', nonce_: st
     }
   }
 }
+
 
 export default {
   askForConfirm: askForConfirm,

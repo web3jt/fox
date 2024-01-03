@@ -1,9 +1,9 @@
-import fn from './utils/fn';
-import prompts from './utils/prompts';
+import ask4bit from './utils/interact-bitcoin';
+import ASK from './utils/prompts';
 
 async function main() {
-  const wallets = await fn.deriveBitcoinWallets(5);
-  const showWIF = await prompts.askForConfirm('Show WIF?');
+  const wallets = await ask4bit.deriveWallets();
+  const showWIF = await ASK.askForConfirm('Show WIF?');
 
   for (const wallet of wallets) {
     console.log();
