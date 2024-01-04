@@ -5,6 +5,7 @@
     "@thirdweb-dev/solana": "^0.2.15"
   },
   "devDependencies": {
+    "@cmdcode/buff": "^2.2.4",
     "@cmdcode/buff-utils": "^2.0.0",
     "@cmdcode/crypto-tools": "^2.6.10",
     "@cmdcode/crypto-utils": "^2.4.6",

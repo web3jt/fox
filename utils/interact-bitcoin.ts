@@ -46,7 +46,7 @@ export const askForBitcoinNetwork = async function (message_: string = "Select B
 
 
 
-export const deriveWallets = async function (amount_: number = undefined): Promise<BitcoinWallet[]> {
+export const deriveWallets = async function (amount_: number = undefined, network_: bitcoin.networks.Network = undefined): Promise<BitcoinWallet[]> {
   const wallets: BitcoinWallet[] = [];
 
   fn.hi('Derive Bitcoin Wallet Accounts');
@@ -65,7 +65,7 @@ export const deriveWallets = async function (amount_: number = undefined): Promi
     process.exit(0);
   }
 
-  const network = await askForBitcoinNetwork();
+  const network = network_ || await askForBitcoinNetwork();
 
   if (!await ASK.askForConfirm(`Mnemonic: ${WORDS.slice(0, 2).join(' ')} ... ${WORDS.slice(-2).join(' ')}`)) {
     console.log('ABANDEND MNEMONIC')
