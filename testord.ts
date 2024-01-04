@@ -8,6 +8,7 @@ import ASK from './utils/prompts';
 
 
 import { keys } from '@cmdcode/crypto-tools';
+import { bufferToString } from 'arweave/node/lib/utils';
 
 bitcoin.initEccLib(ecc);
 
@@ -23,6 +24,10 @@ const bytesToHex = function (uint8Array_: Uint8Array): string {
 
 const bufferToUint8Array = function (buffer_: Buffer): Uint8Array {
   return new Uint8Array(buffer_.buffer, buffer_.byteOffset, buffer_.byteLength);
+}
+
+const bufferToHex = function (buffer_: Buffer): string {
+  return bytesToHex(bufferToUint8Array(buffer_));
 }
 
 
@@ -44,13 +49,13 @@ async function main() {
   console.log('p2tr   (Taproot):', wallet.p2tr.address);
 
 
-  const psbt = new bitcoin.Psbt({ network: network });
+
 
   const hexData = DATA.toString("hex");
   const publicKeyHex = wallet.p2trInternalKey.toString("hex");
 
-  console.log('hexData:', hexData);
-  console.log('publicKeyHex:', publicKeyHex);
+  console.log('hexData:\n  ', hexData);
+  console.log('publicKeyHex:\n  ', publicKeyHex);
 
   const script = [
     wallet.p2trInternalKey.toString('hex'),
@@ -65,7 +70,7 @@ async function main() {
     'OP_ENDIF'
   ];
 
-  console.log('script:', script);
+  console.log('script:\n  ', script);
 
   let inscribeLockScript = bitcoin.script.fromASM(script.join(' '));
 
@@ -85,15 +90,68 @@ async function main() {
     redeem: inscribeLockRedeem,
   });
 
+  console.log('inscribeP2tr:\n  ', inscribeP2tr);
+  console.log('inscribeP2tr.hash:\n  ', bufferToHex(inscribeP2tr.hash));
+  console.log('inscribeP2tr.address:\n  ', inscribeP2tr.address);
+  console.log('inscribeP2tr.pubkey:\n  ', bufferToHex(inscribeP2tr.pubkey));
+  console.log('inscribeP2tr.internalPubkey:\n  ', bufferToHex(inscribeP2tr.internalPubkey));
+  // console.log('inscribeP2tr.witness:\n  ', inscribeP2tr.witness);
+  // console.log('inscribeP2tr.signature:\n  ', inscribeP2tr.signature);
+
+
   const tapLeafScript = {
     leafVersion: inscribeLockRedeem.redeemVersion!,
     script: inscribeLockRedeem.output || Buffer.from(""),
     controlBlock: inscribeP2tr.witness![inscribeP2tr.witness!.length - 1],
   };
 
+  // console.log('tapLeafScript:', tapLeafScript);
+
+  console.log('inscribeLockScript / scriptTree.output / tapLeafScript.script:\n  ', bufferToHex(inscribeLockScript));
+  console.log('tapLeafScript.controlBlock:\n  ', bufferToHex(tapLeafScript.controlBlock));
+
+  /**
+   * @cmdcode/tapscript starts here
+   */
+  console.log();
+
+  const seckey = keys.get_seckey(wallet.keyPair.privateKey.toString('hex'));
+
+  console.log('seckey:\n  ', bytesToHex(seckey));
+
+  const pubkey = bufferToUint8Array(wallet.p2trInternalKey);
+
+  console.log('pubkey:\n  ', bytesToHex(pubkey));
+
+
+  const tapleaf = Tap.encodeScript(script);
+
+  console.log('tapleaf:\n  ', tapleaf);
+
+  const [tpubkey, cblock] = Tap.getPubKey(pubkey, { target: tapleaf });
+
+  console.log('tpubkey:\n  ', tpubkey);
+  console.log('cblock:\n  ', cblock);
+
+  const address = Address.p2tr.fromPubKey(tpubkey, 'regtest');
+
+  console.log('address:\n  ', address);
+
+
+
+
+  const psbt = new bitcoin.Psbt({ network: network });
+
+  // 现在是少了 commit 交易
+  // const address = Address.p2tr.fromPubKey(tpubkey, 'regtest'); 干啥用的？
+  // 和 inscribeP2tr.address 有什么区别？
+
+  // 怎么把 tx id 放在下一步的 reveal 交易 input 里边去
+
+  // 这里需要一个 commit 的 tx id ?
   psbt.addInput({
     hash: '20fde13f462cd7821d427623e9f159323a604d02812b6a08118bb1532c179240',
-    index: 0,
+    index: 1,
     witnessUtxo: {
       script: inscribeP2tr.output!,
       value: 300000000,
@@ -101,6 +159,7 @@ async function main() {
     tapInternalKey: wallet.p2trInternalKey,
     tapLeafScript: [tapLeafScript],
   });
+
 
   psbt.addOutput({
     address: 'bcrt1phhwlknpnauxgzs59pdempdn2ccc4l73yj98ckgyn2af6rw6wcehs7tcyzg',
@@ -121,61 +180,10 @@ async function main() {
   const finalTxSize = finalTxHex.length / 2;
   console.log(`\n    final size: ${finalTxSize}\n`);
 
-  // let inscribeLockScript = bitcoin.script.fromASM(
-  //   `${publicKeyHex} OP_CHECKSIG OP_0 OP_IF ${Buffer.from("ord").toString(
-  //     "hex"
-  //   )} OP_1 ${Buffer.from("text/plain;charset=utf-8").toString(
-  //     "hex"
-  //   )} OP_0 ${splitByNChars(hexData, 1040).join(" ")} OP_ENDIF`
-  // );
-  // inscribeLockScript = Buffer.from(
-  //   inscribeLockScript.toString("hex").replace("6f726451", "6f72640101"),
-  //   "hex"
-  // );
-
-  // const scriptTree: Taptree = {
-  //   output: inscribeLockScript,
-  // };
-
-  // console.log();
-  // console.log();
-  // console.log();
-  // console.log(wallet.keyPair.privateKey);
-  // // console.log(wallet.p2trInternalKey.toString('hex'));
-
-  // const seckey = keys.get_seckey(wallet.keyPair.privateKey.toString('hex'));
-
-  // console.log('seckey:', bytesToHex(seckey));
-
-  // const pubkey = bufferToUint8Array(wallet.p2trInternalKey);
-
-  // console.log('pubkey:', bytesToHex(pubkey));
-
-
-  // const marker = ec.encode(MARKET);
-  // const mimetype = ec.encode(MIMETYPE);
-  // const data = ec.encode(DATA);
-
-  // console.log('marker:', bytesToHex(marker));
-  // console.log('mimetype:', bytesToHex(mimetype));
-  // console.log('data:', bytesToHex(data));
-
-  // const script = [pubkey, 'OP_CHECKSIG', 'OP_0', 'OP_IF', marker, '01', mimetype, 'OP_0', data, 'OP_ENDIF'];
-
-  // const tapleaf = Tap.encodeScript(script);
-
-  // console.log('tapleaf:', tapleaf);
-
-  // const [tpubkey, cblock] = Tap.getPubKey(pubkey, { target: tapleaf });
-
-  // console.log('tpubkey:', tpubkey);
-  // console.log('cblock:', cblock);
-
-  // const address = Address.p2tr.fromPubKey(tpubkey, 'regtest');
-
-  // console.log('address:', address);
-
-
+  return;
+  /**
+   * ???
+   */
   // const txdata = Tx.create({
   //   vin: [{
   //     txid: '9e71476b2af0cbb5435f4a10f95400ea7738d90ba61a3072e6797ee5e5aaae20',
