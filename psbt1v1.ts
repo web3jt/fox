@@ -11,25 +11,24 @@ async function main() {
   console.log(`p2tr   (Taproot):`, wallet.p2tr.address);
   console.log(`  taproot output:`, wallet.p2tr.output.toString('hex'));
 
-
-
   const psbt = new bitcoin.Psbt({ network: network });
-  psbt.setVersion(2);
-  psbt.setLocktime(0);
+  // psbt.setVersion(2);
+  // psbt.setLocktime(0);
 
 
   /**
    * add input
    */
   psbt.addInput({
-    hash: '20fde13f462cd7821d427623e9f159323a604d02812b6a08118bb1532c179240',
-    index: 0, // vout
+    hash: '907921ef415bef3b3047c735037f6913e8b38d12e52e12ef87eac982f611a7fa', // txid
+    index: 1, // vout
     witnessUtxo: {
       script: wallet.p2tr.output,
-      value: 300000000,
+      value: 500000000,
     },
     tapInternalKey: wallet.p2trInternalKey,
   });
+
 
   /**
    * add output
@@ -46,15 +45,11 @@ async function main() {
   const estPsbt = psbt.clone();
 
   estPsbt.addOutput({
-    address: 'bcrt1phhwlknpnauxgzs59pdempdn2ccc4l73yj98ckgyn2af6rw6wcehs7tcyzg',
-    value: 100000000,
+    address: '2NAAGSRacmwf19TnrGEe311w6qP7hc41Uw5',
+    value: 500000000 - 100000000,
   });
 
   estPsbt.signInput(0, wallet.p2trSigner);
-
-
-
-
   estPsbt.finalizeAllInputs();
   const estTxHex = estPsbt.extractTransaction(true).toHex();
 
@@ -64,22 +59,18 @@ async function main() {
 
 
 
+
+
   /**
    * add output
    */
   psbt.addOutput({
-    address: 'bcrt1phhwlknpnauxgzs59pdempdn2ccc4l73yj98ckgyn2af6rw6wcehs7tcyzg',
-    value: 300000000 - 100000000 - estTxSize * 20,
+    address: '2NAAGSRacmwf19TnrGEe311w6qP7hc41Uw5',
+    value: 500000000 - 100000000 - estTxSize * 20,
   });
 
 
   psbt.signInput(0, wallet.p2trSigner);
-
-
-
-
-
-
   psbt.finalizeAllInputs();
 
   const finalTx = psbt.extractTransaction(true);
@@ -89,7 +80,14 @@ async function main() {
   console.log(finalTxHex);
 
   const finalTxSize = finalTxHex.length / 2;
-  console.log(`\n    final size: ${finalTxSize}\n`);
+
+  console.log(`\nfinal size: ${finalTxSize}\n`);
+
+  const fee = psbt.getFee();
+  const feeRate = psbt.getFeeRate();
+
+  console.log(`fee: ${fee}`);
+  console.log(`fee rate: ${feeRate}`);
 }
 
 main();

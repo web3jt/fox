@@ -48,17 +48,17 @@ async function main() {
   console.log('p2sh   (P2SH)   :', wallet.p2sh.address);
   console.log('p2tr   (Taproot):', wallet.p2tr.address);
 
-
-
+  console.log();
+  console.log('keyPair.publicKey:\n  ', wallet.keyPair.publicKey.toString('hex'));
 
   const hexData = DATA.toString("hex");
-  const publicKeyHex = wallet.p2trInternalKey.toString("hex");
+  const p2trInternalKeyHex = wallet.p2trInternalKey.toString("hex");
 
   console.log('hexData:\n  ', hexData);
-  console.log('publicKeyHex:\n  ', publicKeyHex);
+  console.log('p2trInternalKeyHex:\n  ', p2trInternalKeyHex);
 
   const script = [
-    wallet.p2trInternalKey.toString('hex'),
+    p2trInternalKeyHex,
     'OP_CHECKSIG',
     'OP_0',
     'OP_IF',
@@ -90,7 +90,7 @@ async function main() {
     redeem: inscribeLockRedeem,
   });
 
-  console.log('inscribeP2tr:\n  ', inscribeP2tr);
+  // console.log('inscribeP2tr:\n  ', inscribeP2tr);
   console.log('inscribeP2tr.hash:\n  ', bufferToHex(inscribeP2tr.hash));
   console.log('inscribeP2tr.address:\n  ', inscribeP2tr.address);
   console.log('inscribeP2tr.pubkey:\n  ', bufferToHex(inscribeP2tr.pubkey));
@@ -128,14 +128,14 @@ async function main() {
 
   console.log('tapleaf:\n  ', tapleaf);
 
-  const [tpubkey, cblock] = Tap.getPubKey(pubkey, { target: tapleaf });
+  const [tapkey, cblock] = Tap.getPubKey(pubkey, { target: tapleaf });
 
-  console.log('tpubkey:\n  ', tpubkey);
+  console.log('tapkey:\n  ', tapkey);
   console.log('cblock:\n  ', cblock);
 
-  const address = Address.p2tr.fromPubKey(tpubkey, 'regtest');
+  const inscriptionAddress = Address.p2tr.fromPubKey(tapkey, 'regtest');
 
-  console.log('address:\n  ', address);
+  console.log('inscriptionAddress:\n  ', inscriptionAddress);
 
 
 
