@@ -123,7 +123,6 @@ async function main() {
 
   console.log('pubkey:\n  ', bytesToHex(pubkey));
 
-
   const tapleaf = Tap.encodeScript(script);
 
   console.log('tapleaf:\n  ', tapleaf);
@@ -143,7 +142,7 @@ async function main() {
   const psbt = new bitcoin.Psbt({ network: network });
 
   // 现在是少了 commit 交易
-  // const address = Address.p2tr.fromPubKey(tpubkey, 'regtest'); 干啥用的？
+  // const address = Address.p2tr.fromPubKey(tapkey, 'regtest'); 干啥用的？
   // 和 inscribeP2tr.address 有什么区别？
 
   // 怎么把 tx id 放在下一步的 reveal 交易 input 里边去
@@ -156,14 +155,16 @@ async function main() {
       script: inscribeP2tr.output!,
       value: 300000000,
     },
-    tapInternalKey: wallet.p2trInternalKey,
+    // tapInternalKey: wallet.p2trInternalKey,
     tapLeafScript: [tapLeafScript],
+    // tapMerkleRoot: inscribeP2tr.hash,
   });
 
 
   psbt.addOutput({
     address: 'bcrt1phhwlknpnauxgzs59pdempdn2ccc4l73yj98ckgyn2af6rw6wcehs7tcyzg',
     value: 299000000,
+    tapInternalKey: wallet.p2trInternalKey,
   });
 
 
@@ -181,37 +182,47 @@ async function main() {
   console.log(`\n    final size: ${finalTxSize}\n`);
 
   return;
+
+
+
+
+
+
+
+
+
+
   /**
    * ???
    */
-  // const txdata = Tx.create({
-  //   vin: [{
-  //     txid: '9e71476b2af0cbb5435f4a10f95400ea7738d90ba61a3072e6797ee5e5aaae20',
-  //     vout: 0,
-  //     prevout: {
-  //       value: 300_000_000,
-  //       scriptPubKey: ['OP_1', tpubkey]
-  //     },
-  //   }],
-  //   vout: [{
-  //     // We are leaving behind 1000 sats as a fee to the miners.
-  //     value: 299_999_000,
-  //     // This is the new script that we are locking our funds to.
-  //     scriptPubKey: Address.toScriptPubKey('bcrt1q6zpf4gefu4ckuud3pjch563nm7x27u4ruahz3y'),
-  //   }]
-  // });
+  const txdata = Tx.create({
+    vin: [{
+      txid: '9e71476b2af0cbb5435f4a10f95400ea7738d90ba61a3072e6797ee5e5aaae20',
+      vout: 0,
+      prevout: {
+        value: 300_000_000,
+        scriptPubKey: ['OP_1', tapkey]
+      },
+    }],
+    vout: [{
+      // We are leaving behind 1000 sats as a fee to the miners.
+      value: 299_999_000,
+      // This is the new script that we are locking our funds to.
+      scriptPubKey: Address.toScriptPubKey('bcrt1q6zpf4gefu4ckuud3pjch563nm7x27u4ruahz3y'),
+    }]
+  });
 
-  // const sig = Signer.taproot.sign(seckey, txdata, 0, { extension: tapleaf });
+  const sig = Signer.taproot.sign(seckey, txdata, 0, { extension: tapleaf });
 
-  // txdata.vin[0].witness = [sig, script, cblock];
+  txdata.vin[0].witness = [sig, script, cblock];
 
-  // console.dir(txdata, { depth: null });
+  console.dir(txdata, { depth: null });
 
-  // const isValid = Signer.taproot.verify(txdata, 0, { pubkey, throws: true });
+  const isValid = Signer.taproot.verify(txdata, 0, { pubkey, throws: true });
 
-  // console.log('tx hex:', Tx.encode(txdata).hex);
+  console.log('tx hex:', Tx.encode(txdata).hex);
 
-  // console.log('\n\nisValid:', isValid);
+  console.log('\n\nisValid:', isValid);
 }
 
 main();

@@ -1,3 +1,6 @@
+.cache/*
+!.cache/.gitkeep
+
 ord*
 sol*
 bulkPRC20Miner*

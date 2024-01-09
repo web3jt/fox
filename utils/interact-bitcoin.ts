@@ -10,7 +10,8 @@ import CONFIG from './config';
 import ASK from './prompts';
 import fn from './fn';
 
-import { BitcoinWallet } from './types';
+
+import { BitcoinNetwork, BitcoinWallet } from './types';
 
 
 const bip32 = BIP32Factory(ecc);
@@ -19,10 +20,11 @@ bitcoin.initEccLib(ecc);
 
 
 
+
 /**
  * Ask for a string
  */
-export const askForBitcoinNetwork = async function (message_: string = "Select Bitcoin Network"): Promise<bitcoin.networks.Network> {
+export const askForBitcoinNetwork = async function (message_: string = "Select Bitcoin Network"): Promise<BitcoinNetwork> {
   const response = await prompts({
     type: 'select',
     name: 'network',
@@ -36,17 +38,26 @@ export const askForBitcoinNetwork = async function (message_: string = "Select B
 
   switch (response.network) {
     case 'bitcoin':
-      return bitcoin.networks.bitcoin;
+      return {
+        name: 'main',
+        network: bitcoin.networks.bitcoin
+      };
     case 'testnet':
-      return bitcoin.networks.testnet;
+      return {
+        name: 'testnet',
+        network: bitcoin.networks.testnet
+      };
     case 'regtest':
-      return bitcoin.networks.regtest;
+      return {
+        name: 'regtest',
+        network: bitcoin.networks.regtest
+      };
   }
 }
 
 
 
-export const deriveWallets = async function (amount_: number = undefined, network_: bitcoin.networks.Network = undefined): Promise<BitcoinWallet[]> {
+export const deriveWallets = async function (amount_: number = undefined, network_: BitcoinNetwork = undefined): Promise<BitcoinWallet[]> {
   const wallets: BitcoinWallet[] = [];
 
   fn.hi('Derive Bitcoin Wallet Accounts');
@@ -88,10 +99,10 @@ export const deriveWallets = async function (amount_: number = undefined, networ
     const publicKey = keyPair.publicKey;
     const publicKeyXOnly = toXOnly(publicKey);
 
-    const p2pkh: Payment = bitcoin.payments.p2pkh({ pubkey: publicKey, network: network });
-    const p2wpkh: Payment = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: network });
-    const p2sh: Payment = bitcoin.payments.p2sh({ redeem: p2wpkh, network: network });
-    const p2tr: Payment = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network });
+    const p2pkh: Payment = bitcoin.payments.p2pkh({ pubkey: publicKey, network: network.network });
+    const p2wpkh: Payment = bitcoin.payments.p2wpkh({ pubkey: publicKey, network: network.network });
+    const p2sh: Payment = bitcoin.payments.p2sh({ redeem: p2wpkh, network: network.network });
+    const p2tr: Payment = bitcoin.payments.p2tr({ internalPubkey: publicKeyXOnly, network: network.network });
 
     const p2trSigner = keyPair.tweak(
       bitcoin.crypto.taggedHash('TapTweak', publicKeyXOnly),

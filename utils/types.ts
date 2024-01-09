@@ -1,7 +1,13 @@
 import { Payment } from 'bitcoinjs-lib';
 import { Signer } from 'bip32/types/bip32';
 import { BIP32Interface } from 'bip32';
+import { Network } from 'bitcoinjs-lib';
+import { Networks } from "@cmdcode/tapscript";
 
+export interface BitcoinNetwork {
+  name: Networks,
+  network: Network,
+}
 
 export interface BitcoinWallet {
   path: string,
@@ -13,3 +19,5 @@ export interface BitcoinWallet {
   p2trInternalKey: Buffer,
   p2trSigner: Signer,
 }
+
+

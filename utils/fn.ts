@@ -117,8 +117,8 @@ const getGasFeeData = async function () {
 
   hint('Current GAS Data');
   console.log(`    Base Fee: ${ethers.formatUnits(fee.gasPrice, "gwei")} GWei`);
-  if (undefined !== fee.maxPriorityFeePerGas) console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
-  if (undefined !== fee.maxFeePerGas) console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
+  if (fee.maxPriorityFeePerGas) console.log(`Priority Fee: ${ethers.formatUnits(fee.maxPriorityFeePerGas, "gwei")} GWei`);
+  if (fee.maxFeePerGas) console.log(`     Max Fee: ${ethers.formatUnits(fee.maxFeePerGas, "gwei")} GWei`);
   console.log('');
 
   return fee;

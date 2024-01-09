@@ -1,0 +1,125 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// datasource dbEthereum {
+//   provider = "postgresql"
+//   url      = env("DB_ETH_URL")
+// }
+
+model BlockTimestamp {
+  id        Int @id
+  timestamp Int
+}
+
+model EventProtocolFeeRecevied {
+  id              Int    @id @default(autoincrement())
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  userAddress     String @db.Char(42)
+  day             Int
+  amount          Bytes
+}
+
+model EventMintStarted {
+  tRank           Int    @id
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  userAddress     String @db.Char(42)
+  gMintPower      Int
+  mintPower       Int
+  numOfDays       Int
+  mintStartTs     Int
+  maturityTs      Int
+  mintPowerBonus  Int
+  EAABonus        Int
+  mintedTitan     Bytes
+  mintableTitan   Bytes
+  mintCost        Bytes
+}
+
+model EventMintClaimed {
+  tRank              Int    @id
+  blockNumber        Int
+  transactionHash    String @db.Char(66)
+  userAddress        String @db.Char(42)
+  rewardTitanClaimed Bytes
+  penaltyAmount      Bytes
+  penaltySeconds     Int
+}
+
+model EventStakeStarted {
+  globalStakeId   Int    @id
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  userAddress     String @db.Char(42)
+  userStakeId     Int
+  numOfDays       Int
+  stakeStartTs    Int
+  maturityTs      Int
+  titanAmount     Bytes
+  shares          Bytes
+}
+
+model EventStakeEnded {
+  globalStakeId     Int    @id
+  blockNumber       Int
+  transactionHash   String @db.Char(66)
+  userAddress       String @db.Char(42)
+  titanAmount       Bytes
+  penaltyAmount     Bytes
+  penaltyPercentage Int
+}
+
+model EventRewardClaimed {
+  id              Int    @id @default(autoincrement())
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  userAddress     String @db.Char(42)
+  ethAmount       Bytes
+}
+
+model EventTitanBurned {
+  id                 Int    @id @default(autoincrement())
+  blockNumber        Int
+  transactionHash    String @db.Char(66)
+  userAddress        String @db.Char(42)
+  projectAddress     String @db.Char(42)
+  burnPoolCycleIndex Int
+  source             Int
+  amount             Bytes
+}
+
+model EventETHDistributed {
+  id              Int    @id @default(autoincrement())
+  blockNumber     Int
+  transactionHash String @default("") @db.Char(66)
+  calletAddress   String @db.Char(42)
+  amount          Bytes
+}
+
+model EventCyclePayoutTriggered {
+  id              Int    @id @default(autoincrement())
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  callerAddress   String @db.Char(42)
+  cycleNo         Int
+  reward          Bytes
+  burnReward      Bytes
+}
+
+model EventGlobalDailyUpdateStats {
+  day             Int    @id
+  blockNumber     Int
+  transactionHash String @db.Char(66)
+  mintCost        Bytes
+  shareRate       Bytes
+  mintableTitan   Bytes
+  mintPowerBonus  Int
+  EAABonus        Int
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
