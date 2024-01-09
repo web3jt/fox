@@ -8,9 +8,19 @@ datasource db {
 //   url      = env("DB_ETH_URL")
 // }
 
-model BlockTimestamp {
-  id        Int @id
-  timestamp Int
+model Block {
+  blockNumber                 Int                           @id @map("id")
+  timestamp                   Int
+  EventProtocolFeeRecevied    EventProtocolFeeRecevied[]
+  EventMintStarted            EventMintStarted[]
+  EventMintClaimed            EventMintClaimed[]
+  EventStakeStarted           EventStakeStarted[]
+  EventStakeEnded             EventStakeEnded[]
+  EventRewardClaimed          EventRewardClaimed[]
+  EventTitanBurned            EventTitanBurned[]
+  EventETHDistributed         EventETHDistributed[]
+  EventCyclePayoutTriggered   EventCyclePayoutTriggered[]
+  EventGlobalDailyUpdateStats EventGlobalDailyUpdateStats[]
 }
 
 model EventProtocolFeeRecevied {
@@ -19,7 +29,8 @@ model EventProtocolFeeRecevied {
   transactionHash String @db.Char(66)
   userAddress     String @db.Char(42)
   day             Int
-  amount          Bytes
+  amount          String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventMintStarted {
@@ -34,9 +45,10 @@ model EventMintStarted {
   maturityTs      Int
   mintPowerBonus  Int
   EAABonus        Int
-  mintedTitan     Bytes
-  mintableTitan   Bytes
-  mintCost        Bytes
+  mintedTitan     String
+  mintableTitan   String
+  mintCost        String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventMintClaimed {
@@ -44,9 +56,10 @@ model EventMintClaimed {
   blockNumber        Int
   transactionHash    String @db.Char(66)
   userAddress        String @db.Char(42)
-  rewardTitanClaimed Bytes
-  penaltyAmount      Bytes
+  rewardTitanClaimed String
+  penaltyAmount      String
   penaltySeconds     Int
+  block              Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventStakeStarted {
@@ -58,8 +71,9 @@ model EventStakeStarted {
   numOfDays       Int
   stakeStartTs    Int
   maturityTs      Int
-  titanAmount     Bytes
-  shares          Bytes
+  titanAmount     String
+  shares          String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventStakeEnded {
@@ -67,9 +81,10 @@ model EventStakeEnded {
   blockNumber       Int
   transactionHash   String @db.Char(66)
   userAddress       String @db.Char(42)
-  titanAmount       Bytes
-  penaltyAmount     Bytes
+  titanAmount       String
+  penaltyAmount     String
   penaltyPercentage Int
+  block             Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventRewardClaimed {
@@ -77,7 +92,8 @@ model EventRewardClaimed {
   blockNumber     Int
   transactionHash String @db.Char(66)
   userAddress     String @db.Char(42)
-  ethAmount       Bytes
+  ethAmount       String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventTitanBurned {
@@ -88,15 +104,17 @@ model EventTitanBurned {
   projectAddress     String @db.Char(42)
   burnPoolCycleIndex Int
   source             Int
-  amount             Bytes
+  amount             String
+  block              Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventETHDistributed {
   id              Int    @id @default(autoincrement())
   blockNumber     Int
-  transactionHash String @default("") @db.Char(66)
+  transactionHash String @db.Char(66)
   calletAddress   String @db.Char(42)
-  amount          Bytes
+  amount          String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventCyclePayoutTriggered {
@@ -105,19 +123,21 @@ model EventCyclePayoutTriggered {
   transactionHash String @db.Char(66)
   callerAddress   String @db.Char(42)
   cycleNo         Int
-  reward          Bytes
-  burnReward      Bytes
+  reward          String
+  burnReward      String
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 model EventGlobalDailyUpdateStats {
   day             Int    @id
   blockNumber     Int
   transactionHash String @db.Char(66)
-  mintCost        Bytes
-  shareRate       Bytes
-  mintableTitan   Bytes
+  mintCost        String
+  shareRate       String
+  mintableTitan   String
   mintPowerBonus  Int
   EAABonus        Int
+  block           Block  @relation(fields: [blockNumber], references: [blockNumber])
 }
 
 generator client {

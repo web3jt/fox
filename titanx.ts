@@ -43,7 +43,7 @@ async function sync() {
     let _savedBlockNumber: number = 0;
     for (let event of events) {
       if (event.blockNumber > _savedBlockNumber) {
-        await titanx.syncBlockTimestamp(event.blockNumber);
+        await titanx.syncBlock(event.blockNumber);
         _savedBlockNumber = event.blockNumber;
       }
 
@@ -53,6 +53,9 @@ async function sync() {
       const elog: ethers.LogDescription = titanx.parseEventToLogDescription(event);
 
       switch (elog.fragment.name) {
+        case EVENTS.EVENT_PROTOCOL_FEE_RECEVIED:
+          await titanx.saveEventProtocolFeeRecevied(event);
+          break;
         case EVENTS.EVENT_MINT_STARTED:
           await titanx.saveEventMintStarted(event);
           break;
@@ -71,14 +74,11 @@ async function sync() {
         case EVENTS.EVENT_TITAN_BURNED:
           await titanx.saveEventTitanBurned(event);
           break;
-        case EVENTS.EVENT_CYCLE_PAYOUT_TRIGGERED:
-          await titanx.saveEventCyclePayoutTriggered(event);
-          break;
         case EVENTS.EVENT_ETH_DISTRIBUTED:
           await titanx.saveEventETHDistributed(event);
           break;
-        case EVENTS.EVENT_PROTOCOL_FEE_RECEVIED:
-          await titanx.saveEventProtocolFeeRecevied(event);
+        case EVENTS.EVENT_CYCLE_PAYOUT_TRIGGERED:
+          await titanx.saveEventCyclePayoutTriggered(event);
           break;
         case EVENTS.EVENT_GLOBAL_DAILY_UPDATE_STATS:
           await titanx.saveEventGlobalDailyUpdateStats(event);

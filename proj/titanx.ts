@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import moment from 'moment';
 import {
   PrismaClient,
-  BlockTimestamp,
+  Block,
   EventMintStarted,
   EventMintClaimed,
   EventStakeStarted,
@@ -62,9 +62,7 @@ class TitanX {
   }
 
   async getCurrentBlockNumber(): Promise<number> {
-    // return 18943145;
-    // return 18637145;
-    // return 18447145;  // very beginning
+    // return 18447145;
 
     const key = 'TitanX_LATEST_BLOCK_NUMBER';
     return cache.get(key) || 18447145;
@@ -118,24 +116,36 @@ class TitanX {
   // console.log('name:', name);
   // console.log('totalSupply:', totalSupply.toString());
 
-  async syncBlockTimestamp(blockNumber_: number) {
-    const exists = await this._db.blockTimestamp.findUnique({
+  async syncBlock(blockNumber_: number) {
+    const exists = await this._db.block.findUnique({
       where: {
-        id: blockNumber_,
+        blockNumber: blockNumber_,
       },
     });
     if (exists) return;
 
     const block = await this.getBlock(blockNumber_);
 
-    const dbData: BlockTimestamp = {
-      id: blockNumber_,
+    const dbData: Block = {
+      blockNumber: blockNumber_,
       timestamp: block.timestamp,
     }
 
-    await this._db.blockTimestamp.create({ data: dbData });
+    await this._db.block.create({ data: dbData });
 
-    console.log(`${blockNumber_}:${`Timestamp`.padStart(EVENT_NAME_MAX_LENGTH, '_')} (${block.timestamp}) -> ${moment.unix(block.timestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`${blockNumber_}:${block.timestamp} -> ${moment.unix(block.timestamp).format('YYYY-MM-DD HH:mm:ss')}`);
+  }
+
+  getEventProtocolFeeReceviedDisplay(data_: EventProtocolFeeRecevied): String {
+    const day = `Day#${data_.day}`.padStart(7, ' ');
+    const amount: bigint = BigInt(data_.amount);
+
+    const t: String[] = [];
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_PROTOCOL_FEE_RECEVIED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(' '.repeat(78));
+    t.push(`${day} _`);
+    t.push(`${ethers.formatEther(amount)} ETH`);
+    return t.join(' ');
   }
 
   async saveEventProtocolFeeRecevied(event_: ethers.Log | ethers.EventLog) {
@@ -153,14 +163,15 @@ class TitanX {
         transactionHash: transactionHash,
         userAddress: userAddress,
         day: Number(day),
-        amount: Buffer.from(amount.toString(16), 'hex'),
+        amount: amount.toString(),
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_PROTOCOL_FEE_RECEVIED.padStart(EVENT_NAME_MAX_LENGTH, '_')} #${exists.id} _ ${transactionHash} _ Day#${day} _ ${ethers.formatEther(amount)} ETH`);
+      const display: String = this.getEventProtocolFeeReceviedDisplay(exists);
+      console.log(`- ${display}`);
+      // console.error(`- ${blockNumber}:${EVENTS.EVENT_PROTOCOL_FEE_RECEVIED.padStart(EVENT_NAME_MAX_LENGTH, '_')} #${exists.id} _ ${transactionHash} _ Day#${day} _ ${ethers.formatEther(amount)} ETH`);
       return;
     }
-
 
     const dbData: EventProtocolFeeRecevied = {
       id: undefined,
@@ -168,17 +179,29 @@ class TitanX {
       transactionHash: transactionHash,
       userAddress: userAddress,
       day: Number(day),
-      amount: Buffer.from(amount.toString(16), 'hex'),
+      amount: amount.toString(),
     }
 
-    await this._db.eventProtocolFeeRecevied.create({ data: dbData });
+    const newEvent = await this._db.eventProtocolFeeRecevied.create({ data: dbData });
+    console.log(this.getEventProtocolFeeReceviedDisplay(newEvent));
+  }
 
-    const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_PROTOCOL_FEE_RECEVIED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`Day#${day} _`);
-    t.push(`${userAddress}/${transactionHash} _`);
-    t.push(`${ethers.formatEther(amount)} ETH`);
-    console.log(t.join(' '));
+  getEventMintStartedDisplay(data_: EventMintStarted): String {
+    const tRank = `#${data_.tRank}`.padStart(6, ' ');
+    const mintPower = `${data_.mintPower}`.padStart(3, ' ');
+    const gMintPower = `${data_.gMintPower}`.padStart(5, ' ');
+    const numOfDays = `${data_.numOfDays}`.padStart(3, ' ');
+    const mintedTitan = BigInt(data_.mintedTitan) / BigInt(1e18);
+    const mintableTitan = BigInt(data_.mintableTitan) / BigInt(1e18);
+    const mintCost = ethers.formatEther(BigInt(data_.mintCost));
+
+    const t: string[] = [];
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_MINT_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${tRank} ${numOfDays} days ${mintPower}/${gMintPower}`);
+    t.push(`+ ${data_.mintPowerBonus} by ${data_.EAABonus} _`);
+    t.push(`${mintedTitan}/${mintableTitan}`);
+    t.push(`${mintCost} ETH`);
+    return t.join(' ');
   }
 
   async saveEventMintStarted(event_: ethers.Log | ethers.EventLog) {
@@ -196,7 +219,7 @@ class TitanX {
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_MINT_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}_#${tRank}`);
+      console.error(`- ${this.getEventMintStartedDisplay(exists)}`);
       return;
     }
 
@@ -225,21 +248,25 @@ class TitanX {
       maturityTs: Number(maturityTs),
       mintPowerBonus: Number(mintPowerBonus),
       EAABonus: Number(EAABonus),
-      mintedTitan: Buffer.from(mintedTitan.toString(16), 'hex'),
-      mintableTitan: Buffer.from(mintableTitan.toString(16), 'hex'),
-      mintCost: Buffer.from(mintCost.toString(16), 'hex'),
+      mintedTitan: mintedTitan.toString(),
+      mintableTitan: mintableTitan.toString(),
+      mintCost: mintCost.toString(),
     }
 
-    await this._db.eventMintStarted.create({ data: dbData });
+    const newEvent = await this._db.eventMintStarted.create({ data: dbData });
+    console.log(this.getEventMintStartedDisplay(newEvent));
+  }
 
-    const t: string[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_MINT_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`#${tRank.toString().padStart(5, ' ')} - ${userAddress} -`);
-    t.push(`${mintPower.toString().padStart(3, ' ')}/${gMintpower.toString().padStart(5, ' ')}`);
-    t.push(`${numOfDays.toString().padStart(3, ' ')} days (${mintStartTs} ~ ${maturityTs}) -`);
-    t.push(`mintPowerBonus:${mintPowerBonus} - EAABonus:${EAABonus} -`);
-    t.push(`${ethers.formatEther(mintedTitan)}/${ethers.formatEther(mintableTitan).padStart(12, ' ')} ${ethers.formatEther(mintCost)} ETH`);
-    console.log(t.join(' '));
+  getEventMintClaimedDisplay(data_: EventMintClaimed): String {
+    const tRank = `#${data_.tRank}`.padStart(6, ' ');
+    const rewardTitanClaimed = BigInt(data_.rewardTitanClaimed) / BigInt(1e18);
+    const penaltyAmount = BigInt(data_.penaltyAmount) / BigInt(1e18);
+    const penaltySeconds = data_.penaltySeconds;
+
+    const t: String[] = [];
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_MINT_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${tRank} + ${rewardTitanClaimed} _ P ${penaltySeconds}s : ${penaltyAmount}`);
+    return t.join(' ');
   }
 
   async saveEventMintClaimed(event_: ethers.Log | ethers.EventLog) {
@@ -259,7 +286,7 @@ class TitanX {
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_MINT_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')}_#${tRank}`);
+      console.error(`- ${this.getEventMintClaimedDisplay(exists)}`);
       return;
     }
 
@@ -268,18 +295,29 @@ class TitanX {
       blockNumber: blockNumber,
       transactionHash: transactionHash,
       userAddress: userAddress,
-      rewardTitanClaimed: Buffer.from(rewardTitanClaimed.toString(16), 'hex'),
-      penaltyAmount: Buffer.from(penaltyAmount.toString(16), 'hex'),
+      rewardTitanClaimed: rewardTitanClaimed.toString(),
+      penaltyAmount: penaltyAmount.toString(),
       penaltySeconds: Number(penaltySeconds),
     }
 
-    await this._db.eventMintClaimed.create({ data: dbData });
+    const newEvent = await this._db.eventMintClaimed.create({ data: dbData });
+    console.log(this.getEventMintClaimedDisplay(newEvent));
+  }
+
+  getEventStakeStartedDisplay(data_: EventStakeStarted): String {
+    const globalStakeId = `#${data_.globalStakeId}g`.padStart(5, ' ');
+    const userStakeId = `#${data_.userStakeId}u`.padStart(5, ' ');
+    const numOfDays = `${data_.numOfDays}`.padStart(4, ' ');
+    const titanAmount = BigInt(data_.titanAmount) / BigInt(1e18);
+    const shares = BigInt(data_.shares);
 
     const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_MINT_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`#${tRank.toString().padStart(5, ' ')} - ${userAddress} -`);
-    t.push(`${rewardTitanClaimed / BigInt(1e18)} - P ${penaltySeconds}s : ${penaltyAmount / BigInt(1e18)}`);
-    console.log(t.join(' '));
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_STAKE_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${globalStakeId} ${userStakeId} _`);
+    t.push(`${numOfDays} days _`);
+    t.push(`${titanAmount} _`);
+    t.push(`shares: ${shares}`);
+    return t.join(' ');
   }
 
   async saveEventStakeStarted(event_: ethers.Log | ethers.EventLog) {
@@ -295,7 +333,7 @@ class TitanX {
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_STAKE_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}_#${globalStakeId}`);
+      console.error(`- ${this.getEventStakeStartedDisplay(exists)}`);
       return;
     }
 
@@ -325,19 +363,17 @@ class TitanX {
 
     if (numOfDays0 !== numOfDays1) {
       console.error(`---------`);
-      console.error(`numOfDays not match`);
-
-      const t: String[] = [];
-      t.push(`${blockNumber}:${EVENTS.EVENT_STAKE_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-      t.push(`${userAddress} -`);
-      t.push(`#${globalStakeId.toString().padStart(5, ' ')} -`);
-      t.push(`${numOfDays0.toString().padStart(4, ' ')} days (${stakeStartTs} ~ ${maturityTs}) -`);
-      t.push(`titanAmount: ${titanAmount / BigInt(1e18)}`);
-      t.push(`shares: ${shares / BigInt(1e18)}`);
-      t.push(`numOfDays: ${numOfDays1}`);
-      t.push(`status: ${status}`);
-      console.log(t.join(' '));
-
+      console.error(`ERROR: numOfDays not match: ${numOfDays0} !== ${numOfDays1}}`);
+      // const t: String[] = [];
+      // t.push(`${blockNumber}:${EVENTS.EVENT_STAKE_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+      // t.push(`${userAddress} -`);
+      // t.push(`#${globalStakeId.toString().padStart(5, ' ')} -`);
+      // t.push(`${numOfDays0.toString().padStart(4, ' ')} days (${stakeStartTs} ~ ${maturityTs}) -`);
+      // t.push(`titanAmount: ${titanAmount / BigInt(1e18)}`);
+      // t.push(`shares: ${shares / BigInt(1e18)}`);
+      // t.push(`numOfDays: ${numOfDays1}`);
+      // t.push(`status: ${status}`);
+      // console.log(t.join(' '));
       console.error(`---------`);
       process.exit(0);
     }
@@ -351,22 +387,24 @@ class TitanX {
       numOfDays: Number(numOfDays0),
       stakeStartTs: Number(stakeStartTs),
       maturityTs: Number(maturityTs),
-      titanAmount: Buffer.from(titanAmount.toString(16), 'hex'),
-      shares: Buffer.from(shares.toString(16), 'hex'),
+      titanAmount: titanAmount.toString(),
+      shares: shares.toString(),
     }
 
-    await this._db.eventStakeStarted.create({ data: dbData });
+    const newEvent = await this._db.eventStakeStarted.create({ data: dbData });
+    console.log(this.getEventStakeStartedDisplay(newEvent));
+  }
+
+  getEventStakeEndedDisplay(data_: EventStakeEnded): String {
+    const globalStakeId = `#${data_.globalStakeId}g`.padStart(5, ' ');
+    const titanAmount = BigInt(data_.titanAmount) / BigInt(1e18);
+    const penaltyAmount = BigInt(data_.penaltyAmount) / BigInt(1e18);
+    const penaltyPercentage = `${data_.penaltyPercentage}%`.padStart(4, ' ');
 
     const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_STAKE_STARTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`${userAddress} -`);
-    t.push(`#${globalStakeId.toString().padStart(5, ' ')} -`);
-    t.push(`${numOfDays0.toString().padStart(4, ' ')} days (${stakeStartTs} ~ ${maturityTs}) -`);
-    t.push(`titanAmount: ${titanAmount / BigInt(1e18)}`);
-    t.push(`shares: ${shares / BigInt(1e18)}`);
-    t.push(`numOfDays: ${numOfDays1}`);
-    t.push(`status: ${status}`);
-    console.log(t.join(' '));
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_STAKE_ENDED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${globalStakeId} _ ${titanAmount} _ ${penaltyPercentage}% ${penaltyAmount}`);
+    return t.join(' ');
   }
 
   async saveEventStakeEnded(event_: ethers.Log | ethers.EventLog) {
@@ -386,7 +424,7 @@ class TitanX {
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_STAKE_ENDED.padStart(EVENT_NAME_MAX_LENGTH, '_')}_#${globalStakeId}`);
+      console.error(`- ${this.getEventStakeEndedDisplay(exists)}`);
       return;
     }
 
@@ -395,20 +433,24 @@ class TitanX {
       blockNumber: blockNumber,
       transactionHash: transactionHash,
       userAddress: userAddress,
-      titanAmount: Buffer.from(titanAmount.toString(16), 'hex'),
-      penaltyAmount: Buffer.from(penaltyAmount.toString(16), 'hex'),
+      titanAmount: titanAmount.toString(),
+      penaltyAmount: penaltyAmount.toString(),
       penaltyPercentage: Number(penaltyPercentage),
     }
 
-    await this._db.eventStakeEnded.create({ data: dbData });
+    const newEvent = await this._db.eventStakeEnded.create({ data: dbData });
+    console.log(this.getEventStakeEndedDisplay(newEvent));
+  }
+
+  getEventRewardClaimedDisplay(data_: EventRewardClaimed): String {
+    const ethAmount = ethers.formatEther(BigInt(data_.ethAmount));
 
     const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_STAKE_ENDED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`${userAddress} -`);
-    t.push(`#${globalStakeId.toString().padStart(5, ' ')} -`);
-    t.push(`${titanAmount / BigInt(1e18)} - ${penaltyPercentage}%: ${penaltyAmount / BigInt(1e18)}`);
-    console.log(t.join(' '));
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_REWARD_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${ethAmount} ETH`);
+    return t.join(' ');
   }
+
 
   async saveEventRewardClaimed(event_: ethers.Log | ethers.EventLog) {
     const blockNumber: number = event_.blockNumber;
@@ -423,11 +465,11 @@ class TitanX {
         blockNumber: Number(blockNumber),
         transactionHash: transactionHash,
         userAddress: userAddress,
-        ethAmount: Buffer.from(ethAmount.toString(16), 'hex'),
+        ethAmount: ethAmount.toString(),
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_REWARD_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')}_#${blockNumber} - ${userAddress} - ${ethers.formatEther(ethAmount)} E`);
+      console.error(`- ${this.getEventRewardClaimedDisplay(exists)}`);
       return;
     }
 
@@ -436,11 +478,23 @@ class TitanX {
       blockNumber: blockNumber,
       transactionHash: transactionHash,
       userAddress: userAddress,
-      ethAmount: Buffer.from(ethAmount.toString(16), 'hex'),
+      ethAmount: ethAmount.toString(),
     }
 
-    await this._db.eventRewardClaimed.create({ data: dbData });
-    console.log(`${blockNumber}:${EVENTS.EVENT_REWARD_CLAIMED.padStart(EVENT_NAME_MAX_LENGTH, '_')} - ${userAddress} - ${ethers.formatEther(ethAmount)} ETH`);
+    const newEvent = await this._db.eventRewardClaimed.create({ data: dbData });
+    console.log(this.getEventRewardClaimedDisplay(newEvent));
+  }
+
+  getEventTitanBurnedDisplay(data_: EventTitanBurned): String {
+    const burnPoolCycleIndex = `Cycle#${data_.burnPoolCycleIndex}`.padStart(8, ' ');
+    const amount = BigInt(data_.amount) / BigInt(1e18);
+    const source = data_.source;
+    const projectAddress = data_.projectAddress;
+
+    const t: String[] = [];
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.userAddress}:${EVENTS.EVENT_TITAN_BURNED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${burnPoolCycleIndex} _ ${amount} ...${source} => ${projectAddress}`);
+    return t.join(' ');
   }
 
   async saveEventTitanBurned(event_: ethers.Log | ethers.EventLog) {
@@ -462,11 +516,11 @@ class TitanX {
         projectAddress: projectAddress,
         burnPoolCycleIndex: Number(burnPoolCycleIndex),
         source: Number(source),
-        amount: Buffer.from(amount.toString(16), 'hex'),
+        amount: amount.toString(),
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_TITAN_BURNED.padStart(EVENT_NAME_MAX_LENGTH, '_')} _ #${exists.id} _ ${userAddress} - ${amount / BigInt(1e18)}`);
+      console.error(`- ${this.getEventTitanBurnedDisplay(exists)}`);
       return;
     }
 
@@ -478,11 +532,20 @@ class TitanX {
       projectAddress: projectAddress,
       burnPoolCycleIndex: Number(burnPoolCycleIndex),
       source: Number(source),
-      amount: Buffer.from(amount.toString(16), 'hex'),
+      amount: amount.toString(),
     }
 
-    await this._db.eventTitanBurned.create({ data: dbData });
-    console.error(`${blockNumber}:${EVENTS.EVENT_TITAN_BURNED.padStart(EVENT_NAME_MAX_LENGTH, '_')} #${burnPoolCycleIndex} _ ${userAddress} - ${amount / BigInt(1e18)} ...${source} => ${projectAddress}`);
+    const newEvent = await this._db.eventTitanBurned.create({ data: dbData });
+    console.log(this.getEventTitanBurnedDisplay(newEvent));
+  }
+
+  getEventETHDistributedDisplay(data_: EventETHDistributed): String {
+    const amount = ethers.formatEther(BigInt(data_.amount));
+
+    const t: String[] = [];
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.calletAddress}:${EVENTS.EVENT_ETH_DISTRIBUTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`${amount} ETH`);
+    return t.join(' ');
   }
 
   async saveEventETHDistributed(event_: ethers.Log | ethers.EventLog) {
@@ -498,11 +561,11 @@ class TitanX {
         blockNumber: Number(blockNumber),
         transactionHash: transactionHash,
         calletAddress: calletAddress,
-        amount: Buffer.from(amount.toString(16), 'hex'),
+        amount: amount.toString(),
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_ETH_DISTRIBUTED.padStart(EVENT_NAME_MAX_LENGTH, '_')} #${exists.id} _ ${calletAddress} _ ${ethers.formatEther(amount)} ETH`);
+      console.error(`- ${this.getEventETHDistributedDisplay(exists)}`);
       return;
     }
 
@@ -511,16 +574,25 @@ class TitanX {
       blockNumber: blockNumber,
       transactionHash: transactionHash,
       calletAddress: calletAddress,
-      amount: Buffer.from(amount.toString(16), 'hex'),
+      amount: amount.toString(),
     }
 
-    await this._db.eventETHDistributed.create({ data: dbData });
+    const newEvent = await this._db.eventETHDistributed.create({ data: dbData });
+    console.log(this.getEventETHDistributedDisplay(newEvent));
+  }
+
+
+
+  getEventCyclePayoutTriggeredDisplay(data_: EventCyclePayoutTriggered): String {
+    const cycleNo = `#${data_.cycleNo}`.padStart(3, ' ');
+    const reward = BigInt(data_.reward) / BigInt(1e18);
+    const burnReward = BigInt(data_.burnReward) / BigInt(1e18);
 
     const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_ETH_DISTRIBUTED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`${calletAddress} _`);
-    t.push(`${ethers.formatEther(amount)} ETH`);
-    console.log(t.join(' '));
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${data_.callerAddress}:${EVENTS.EVENT_CYCLE_PAYOUT_TRIGGERED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+    t.push(`Cycle${cycleNo} _`);
+    t.push(`+ R ${reward} - B ${burnReward}`);
+    return t.join(' ');
   }
 
   async saveEventCyclePayoutTriggered(event_: ethers.Log | ethers.EventLog) {
@@ -539,12 +611,12 @@ class TitanX {
         transactionHash: transactionHash,
         callerAddress: callerAddress,
         cycleNo: Number(cycleNo),
-        reward: Buffer.from(reward.toString(16), 'hex'),
-        burnReward: Buffer.from(burnReward.toString(16), 'hex'),
+        reward: reward.toString(),
+        burnReward: burnReward.toString(),
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_CYCLE_PAYOUT_TRIGGERED.padStart(EVENT_NAME_MAX_LENGTH, '_')} - ${callerAddress} - ${cycleNo} - R ${reward / BigInt(1e18)} - B ${burnReward / BigInt(1e18)}`);
+      console.error(`- ${this.getEventCyclePayoutTriggeredDisplay(exists)}`);
       return;
     }
 
@@ -554,17 +626,31 @@ class TitanX {
       transactionHash: transactionHash,
       callerAddress: callerAddress,
       cycleNo: Number(cycleNo),
-      reward: Buffer.from(reward.toString(16), 'hex'),
-      burnReward: Buffer.from(burnReward.toString(16), 'hex'),
+      reward: reward.toString(),
+      burnReward: burnReward.toString(),
     }
 
-    await this._db.eventCyclePayoutTriggered.create({ data: dbData });
+    const newEvent = await this._db.eventCyclePayoutTriggered.create({ data: dbData });
+    console.log(this.getEventCyclePayoutTriggeredDisplay(newEvent));
+  }
+
+  getEventGlobalDailyUpdateStatsDisplay(data_: EventGlobalDailyUpdateStats): String {
+    const day = `Day#${data_.day}`.padStart(7, ' ');
+    const mintCost = ethers.formatEther(BigInt(data_.mintCost));
+    const shareRate = BigInt(data_.shareRate);
+    const mintableTitan = BigInt(data_.mintableTitan) / BigInt(1e18);
+    const mintPowerBonus = data_.mintPowerBonus;
+    const EAABonus = data_.EAABonus;
+
     const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_CYCLE_PAYOUT_TRIGGERED.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`#${cycleNo.toString().padStart(3, ' ')} _`);
-    t.push(`${callerAddress}`);
-    t.push(`+ R ${reward / BigInt(1e18)} - B ${burnReward / BigInt(1e18)}`);
-    console.log(t.join(' '));
+    t.push(`${data_.blockNumber}:${data_.transactionHash}:${' '.repeat(42)}:${EVENTS.EVENT_GLOBAL_DAILY_UPDATE_STATS.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
+
+    t.push(`${day} _`);
+    t.push(`${mintCost} ETH _`);
+    t.push(`shareRate: ${shareRate} _`);
+    t.push(`mintableTitan: ${mintableTitan} _`);
+    t.push(`${mintPowerBonus}/${EAABonus}`);
+    return t.join(' ');
   }
 
   async saveEventGlobalDailyUpdateStats(event_: ethers.Log | ethers.EventLog) {
@@ -586,7 +672,7 @@ class TitanX {
       },
     });
     if (exists) {
-      console.error(`- ${blockNumber}:${EVENTS.EVENT_GLOBAL_DAILY_UPDATE_STATS.padStart(EVENT_NAME_MAX_LENGTH, '_')} _ Day#${day}`);
+      console.error(`- ${this.getEventGlobalDailyUpdateStatsDisplay(exists)}`);
       return;
     }
 
@@ -594,24 +680,15 @@ class TitanX {
       day: Number(day),
       blockNumber: blockNumber,
       transactionHash: transactionHash,
-      mintCost: Buffer.from(mintCost.toString(16), 'hex'),
-      shareRate: Buffer.from(shareRate.toString(16), 'hex'),
-      mintableTitan: Buffer.from(mintableTitan.toString(16), 'hex'),
+      mintCost: mintCost.toString(),
+      shareRate: shareRate.toString(),
+      mintableTitan: mintableTitan.toString(),
       mintPowerBonus: Number(mintPowerBonus),
       EAABonus: Number(EAABonus),
     }
 
-    await this._db.eventGlobalDailyUpdateStats.create({ data: dbData });
-
-    const t: String[] = [];
-    t.push(`${blockNumber}:${EVENTS.EVENT_GLOBAL_DAILY_UPDATE_STATS.padStart(EVENT_NAME_MAX_LENGTH, '_')}`);
-    t.push(`Day#${day} _`);
-    t.push(`mintCost: ${ethers.formatEther(mintCost)} ETH _`);
-    t.push(`shareRate: ${shareRate} _`);
-    t.push(`mintableTitan: ${mintableTitan / BigInt(1e18)} _`);
-    t.push(`mintPowerBonus: ${mintPowerBonus} _`);
-    t.push(`EAABonus: ${EAABonus}`);
-    console.log(t.join(' '));
+    const newEvent = await this._db.eventGlobalDailyUpdateStats.create({ data: dbData });
+    console.log(this.getEventGlobalDailyUpdateStatsDisplay(newEvent));
   }
 }
 
