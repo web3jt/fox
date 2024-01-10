@@ -68,6 +68,9 @@ async function main() {
   });
 
 
+  /**
+   * estimate size, fee
+   */
   const psbtForEstimate = psbt.clone();
   psbtForEstimate.addOutput({
     address: wallet1.p2tr.address,
@@ -84,6 +87,9 @@ async function main() {
   console.log('---------');
 
 
+  /**
+   * add output for chang output
+   */
   psbt.addOutput({
     address: wallet1.p2tr.address,
     value: utxo.value - 30000 - estTxSize * FEE_RATE,
