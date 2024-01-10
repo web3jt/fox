@@ -3,7 +3,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { Buff, Bytes } from '@cmdcode/buff';
 import { util } from '@cmdcode/crypto-tools';
 import { Address, Signer, Tap, Tx } from '@cmdcode/tapscript';
-import ask4bit from './utils/interact-bitcoin';
+import ask4bit from './utils/bitcoin';
 import ASK from './utils/prompts';
 
 

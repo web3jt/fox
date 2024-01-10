@@ -22,7 +22,7 @@
     "@types/qrcode-terminal": "^0.12.2",
     "alchemy-sdk": "^2.9.0",
     "arweave": "^1.14.4",
-    "axios": "^1.6.2",
+    "axios": "^1.6.5",
     "bip32": "^4.0.0",
     "bip39": "^3.1.0",
     "bitcoin-core": "^4.1.0",

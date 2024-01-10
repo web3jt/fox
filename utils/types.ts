@@ -20,4 +20,9 @@ export interface BitcoinWallet {
   p2trSigner: Signer,
 }
 
-
+export interface UTXO {
+  tx: string,
+  index: number,
+  value: number,
+  confirmed: boolean,
+}

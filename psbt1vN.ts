@@ -1,6 +1,6 @@
 // import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
-import ask4bit from './utils/interact-bitcoin';
+import ask4bit from './utils/bitcoin';
 
 const MARKER = Buffer.from('ord');
 const MIMETYPE = Buffer.from('text/plain;charset=utf-8');

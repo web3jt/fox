@@ -1,4 +1,4 @@
-import ask4bit from './utils/interact-bitcoin';
+import ask4bit from './utils/bitcoin';
 import ASK from './utils/prompts';
 
 async function main() {

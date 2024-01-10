@@ -1,5 +1,5 @@
 import * as bitcoin from 'bitcoinjs-lib';
-import ask4bit from './utils/interact-bitcoin';
+import ask4bit from './utils/bitcoin';
 
 
 async function main() {
