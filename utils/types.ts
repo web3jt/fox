@@ -26,3 +26,8 @@ export interface UTXO {
   value: number,
   confirmed: boolean,
 }
+
+export interface Inscription {
+  mimetype: String,
+  data: Buffer,
+}

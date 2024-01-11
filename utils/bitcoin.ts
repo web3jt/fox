@@ -9,13 +9,14 @@ import BIP32Factory, { BIP32Interface } from 'bip32';
 import { Networks as BitcoinNetworks } from "@cmdcode/tapscript";
 import { Buff } from "@cmdcode/buff-utils";
 import { Address, Signer, Networks, Tap, Tx } from '@cmdcode/tapscript';
+import { keys } from '@cmdcode/crypto-tools';
 
 import CONFIG from './config';
 import ASK from './prompts';
 import fn from './fn';
 
 
-import { BitcoinWallet, UTXO } from './types';
+import { BitcoinWallet, UTXO, Inscription } from './types';
 
 
 const bip32 = BIP32Factory(ecc);
@@ -27,6 +28,8 @@ export const ELECTRS_API_BASE_URL = {
   REGTEST: CONFIG.ELECTRS_API_BASE_URL?.REGTEST || 'http://127.0.0.1:3000',
 }
 
+
+const ORDINALS_POSTAGE = 546;
 export const BUFFER_MARKER = Buffer.from('ord', 'utf8');
 export const BUFFER_MIMETYPE_TEXT = Buffer.from('text/plain;charset=utf-8', 'utf8');
 export const BUFFER_MIMETYPE_TEXT_SHORT = Buffer.from('text/plain', 'utf8');
@@ -36,6 +39,21 @@ export const BUFFER_MIMETYPE = {
   TEXT_SHORT: Buffer.from('text/plain', 'utf8'),
 }
 
+const PLACEHOLDER_NETWORK = bitcoin.networks.regtest;
+const PLACEHOLDER_HEX_64 = '1'.repeat(64);
+const PLACEHOLDER_SEED = Buffer.from(`1`.repeat(128), 'hex');
+const PLACEHOLDER_ROOT = bip32.fromSeed(PLACEHOLDER_SEED);
+const PLACEHOLDER_KEY_PAIR = PLACEHOLDER_ROOT.derivePath(`m/86'/0'/0'/0/0`);
+const PLACEHOLDER_PUBLICK_KEY_X_ONLY = toXOnly(PLACEHOLDER_KEY_PAIR.publicKey);
+const PLACEHOLDER_P2TR = bitcoin.payments.p2tr({ internalPubkey: PLACEHOLDER_PUBLICK_KEY_X_ONLY, network: PLACEHOLDER_NETWORK });
+const PLACEHOLDER_P2TR_SIGNER = PLACEHOLDER_KEY_PAIR.tweak(bitcoin.crypto.taggedHash('TapTweak', PLACEHOLDER_PUBLICK_KEY_X_ONLY));
+const PLACEHOLDER_P2TR_ADDRESS = PLACEHOLDER_P2TR.address;
+const PLACEHOLDER_UTXO: UTXO = {
+  tx: PLACEHOLDER_HEX_64,
+  index: 0,
+  value: 1e8,
+  confirmed: true,
+}
 
 /**
  * Ask for a string
@@ -162,14 +180,14 @@ function initInscribeGroup(
 }
 
 
-function textInscribeGroup(
+
+
+function tapInscribe(
   pubkey_: Buff,
-  text_: String,
+  inscription_: Inscription,
   network_: bitcoin.networks.Network,
-  mimetype_: Buffer = BUFFER_MIMETYPE.TEXT_SHORT,
 ) {
   const networkName = getNetworkTitle(network_);
-  const bufferText = Buffer.from(text_, 'utf8');
 
   const inscriptionScript = [
     pubkey_,
@@ -178,9 +196,9 @@ function textInscribeGroup(
     "OP_IF",
     BUFFER_MARKER,
     "01",
-    mimetype_,
+    Buffer.from(inscription_.mimetype, 'utf-8'),
     "OP_0",
-    bufferText,
+    inscription_.data,
     "OP_ENDIF",
   ];
 
@@ -224,6 +242,23 @@ export async function getUTXOs(
   return array;
 }
 
+
+export async function postTxHex(txHex_: String, network_: bitcoin.networks.Network): Promise<String> {
+  const apiBaseUrl = getElectrsApiBaseUrl(network_);
+  const url = `${apiBaseUrl}/tx`;
+
+  const response = await axios.post(url, txHex_);
+  if (200 !== response.status) {
+    throw new Error(`Failed to post TxHex`);
+  }
+
+  return response.data;
+}
+
+
+
+
+
 function getElectrsApiBaseUrl(network_: bitcoin.networks.Network) {
   switch (network_) {
     case bitcoin.networks.bitcoin:
@@ -237,13 +272,103 @@ function getElectrsApiBaseUrl(network_: bitcoin.networks.Network) {
   }
 }
 
+function getMempoolBaseUrl(network_: bitcoin.networks.Network) {
+  switch (network_) {
+    case bitcoin.networks.bitcoin:
+      return 'https://ordpool.space';
+    case bitcoin.networks.testnet:
+      return 'https://ordpool.space/testnet';
+    case bitcoin.networks.regtest:
+      return 'http://127.0.0.1:18080'
+    default:
+      throw new Error(`Invalid Bitcoin Network`);
+  }
+}
+
+
+function estInscriptionTxVSize(inscription_: Inscription): number {
+  const privateKeyBuff = keys.get_seckey(PLACEHOLDER_HEX_64);
+  const tPublicKeyBuff = keys.get_pubkey(PLACEHOLDER_HEX_64, true);
+
+  const {
+    inscriptionScript,
+    inscriptionTapleaf,
+    inscriptionTPubkey,
+    inscriptionCBlock,
+    inscriptionAddress,
+  } = tapInscribe(tPublicKeyBuff, inscription_, PLACEHOLDER_NETWORK);
+
+  const txdata = Tx.create({
+    vin: [
+      {
+        txid: PLACEHOLDER_UTXO.tx,
+        vout: PLACEHOLDER_UTXO.index,
+        prevout: {
+          value: PLACEHOLDER_UTXO.value,
+          scriptPubKey: ["OP_1", inscriptionTPubkey],
+        },
+      },
+    ],
+    vout: [
+      {
+        value: ORDINALS_POSTAGE,
+        scriptPubKey: Address.toScriptPubKey(PLACEHOLDER_P2TR_ADDRESS),
+      },
+    ],
+  });
+
+  const sig = Signer.taproot.sign(privateKeyBuff, txdata, 0, { extension: inscriptionTapleaf })
+  txdata.vin[0].witness = [sig, inscriptionScript, inscriptionCBlock]
+
+  return Tx.util.getTxSize(txdata).vsize;
+}
+
+
+function estTransferTxVSize(sats_: number): number {
+  const psbt = new bitcoin.Psbt({ network: PLACEHOLDER_NETWORK });
+
+  psbt.addInput({
+    hash: PLACEHOLDER_UTXO.tx,
+    index: PLACEHOLDER_UTXO.index,
+    witnessUtxo: {
+      script: PLACEHOLDER_P2TR.output!,
+      value: PLACEHOLDER_UTXO.value,
+    },
+    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
+  });
+
+  psbt.addOutput({
+    address: PLACEHOLDER_P2TR_ADDRESS,
+    value: sats_,
+    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
+  });
+
+  psbt.addOutput({
+    address: PLACEHOLDER_P2TR_ADDRESS,
+    value: PLACEHOLDER_UTXO.value - sats_,
+    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
+  });
+
+  psbt.signInput(0, PLACEHOLDER_P2TR_SIGNER);
+  psbt.finalizeAllInputs();
+
+  const txHex = psbt.extractTransaction(true).toHex();
+  return txHex.length / 2;
+}
+
+
 export default {
   askForBitcoinNetwork: askForBitcoinNetwork,
   getNetworkTitle: getNetworkTitle,
   deriveWallets: deriveWallets,
 
   initInscribeGroup: initInscribeGroup,
-  textInscribeGroup: textInscribeGroup,
+  tapInscribe: tapInscribe,
 
   getUTXOs: getUTXOs,
+  estTransferTxVSize: estTransferTxVSize,
+  estInscriptionTxSize: estInscriptionTxVSize,
+
+  postTxHex: postTxHex,
+  getMempoolBaseUrl: getMempoolBaseUrl,
 }
