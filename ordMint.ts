@@ -7,7 +7,6 @@ import ASK from './utils/prompts';
 import { Buff } from "@cmdcode/buff-utils";
 
 import { keys } from '@cmdcode/crypto-tools';
-import { bufferToString } from 'arweave/node/lib/utils';
 
 
 
@@ -45,11 +44,16 @@ async function main() {
     data: Buffer.from(TEXT, 'utf-8'),
   }
 
-  const vSizeInscribe = bit.estInscriptionTxSize(inscription);
-  const vSizeTransfer = bit.estTransferTxVSize(vSizeInscribe);
+  const txInscribeSize = bit.estTxInscribeSize(inscription, 4);
+  const txTransferSize = bit.estTxTransferSize(1, 2);
 
-  const satsInscribe = vSizeInscribe * FEE_RATE + ORDINALS_POSTAGE;
-  const feeTransfer = vSizeTransfer * FEE_RATE;
+  const satsInscribe = txInscribeSize * FEE_RATE + ORDINALS_POSTAGE; // fee + postage
+  const satsTransfer = txTransferSize * FEE_RATE; // fee only
+
+  console.log('txInscribeSize:', txInscribeSize);
+  console.log('txTransferSize:', txTransferSize);
+
+
 
   const network = await bit.askForBitcoinNetwork();
   const wallets = await bit.deriveWallets(1, network);
@@ -83,12 +87,14 @@ async function main() {
   // console.log('inscriptionAddress:\n  ', inscriptionAddress);
 
 
-  const utxos = await bit.getUTXOs(wallet.p2tr.address, network, {
-    // confirmedOnly: true,
-    minValue: satsInscribe,
-  });
+  const utxos = await bit.getUTXOs(wallet.p2tr.address, network);
+
+  console.log('utxos:', utxos);
 
   const utxoTransfer = utxos[0];
+
+  console.log('utxoTransfer:', utxoTransfer);
+
 
   const psbt = new bitcoin.Psbt({ network: network });
 
@@ -102,17 +108,15 @@ async function main() {
     tapInternalKey: wallet.p2trInternalKey,
   });
 
-  const payment = bitcoin.payments.p2tr({ address: inscriptionAddress, network: network });
-
   psbt.addOutput({
     address: inscriptionAddress,
     value: satsInscribe,
-    script: payment.output!,
+    script: bitcoin.payments.p2tr({ address: inscriptionAddress, network: network }).output!,
   });
 
   psbt.addOutput({
     address: wallet.p2tr.address,
-    value: utxoTransfer.value - satsInscribe - feeTransfer,
+    value: utxoTransfer.value - satsInscribe - satsTransfer,
     tapInternalKey: wallet.p2trInternalKey,
   });
 

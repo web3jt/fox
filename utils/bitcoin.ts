@@ -123,6 +123,9 @@ export const deriveWallets = async function (amount_: number = undefined, networ
 
   const passphrase = await ASK.askForPassphrase();
   const seed = await bip39.mnemonicToSeed(MNEMONIC, passphrase);
+
+  console.log('seed:', seed.subarray(0, 4).toString('hex'));
+
   const root: BIP32Interface = bip32.fromSeed(seed);
 
   const accountIndexStart = await ASK.askForNumber('Account#_', '0');
@@ -131,7 +134,7 @@ export const deriveWallets = async function (amount_: number = undefined, networ
   for (let i = 0; i < amount; i++) {
     const index = accountIndexStart + i;
 
-    const path = `m/86'/0'/0'/0/${index}`;
+    const path = `m/86'/1'/0'/0/${index}`;
     const keyPair = root.derivePath(path);
 
     const publicKey = keyPair.publicKey;
@@ -256,6 +259,14 @@ export async function postTxHex(txHex_: String, network_: bitcoin.networks.Netwo
 }
 
 
+export function sumUTXOs(utxos_: UTXO[]): number {
+  let sum = 0;
+  for (const utxo of utxos_) {
+    sum += utxo.value;
+  }
+  return sum;
+}
+
 
 
 
@@ -286,7 +297,7 @@ function getMempoolBaseUrl(network_: bitcoin.networks.Network) {
 }
 
 
-function estInscriptionTxVSize(inscription_: Inscription): number {
+function estTxInscribeSize(inscription_: Inscription, inputsCount_: number = 1): number {
   const privateKeyBuff = keys.get_seckey(PLACEHOLDER_HEX_64);
   const tPublicKeyBuff = keys.get_pubkey(PLACEHOLDER_HEX_64, true);
 
@@ -298,17 +309,20 @@ function estInscriptionTxVSize(inscription_: Inscription): number {
     inscriptionAddress,
   } = tapInscribe(tPublicKeyBuff, inscription_, PLACEHOLDER_NETWORK);
 
-  const txdata = Tx.create({
-    vin: [
-      {
-        txid: PLACEHOLDER_UTXO.tx,
-        vout: PLACEHOLDER_UTXO.index,
-        prevout: {
-          value: PLACEHOLDER_UTXO.value,
-          scriptPubKey: ["OP_1", inscriptionTPubkey],
-        },
+  const inputs = [];
+  for (let i = 0; i < inputsCount_; i++) {
+    inputs.push({
+      txid: PLACEHOLDER_UTXO.tx,
+      vout: PLACEHOLDER_UTXO.index,
+      prevout: {
+        value: PLACEHOLDER_UTXO.value,
+        scriptPubKey: ["OP_1", inscriptionTPubkey],
       },
-    ],
+    });
+  }
+
+  const txdata = Tx.create({
+    vin: inputs,
     vout: [
       {
         value: ORDINALS_POSTAGE,
@@ -320,34 +334,39 @@ function estInscriptionTxVSize(inscription_: Inscription): number {
   const sig = Signer.taproot.sign(privateKeyBuff, txdata, 0, { extension: inscriptionTapleaf })
   txdata.vin[0].witness = [sig, inscriptionScript, inscriptionCBlock]
 
-  return Tx.util.getTxSize(txdata).vsize;
+
+  if (1 < inputsCount_) {
+    for (let i = 1; i < inputsCount_; i++) {
+      txdata.vin[i].witness = [Signer.taproot.sign(privateKeyBuff, txdata, i)];
+    }
+  }
+
+  return Tx.util.getTxSize(txdata).size;
 }
 
 
-function estTransferTxVSize(sats_: number): number {
+function estTxTransferSize(inputsCount_: number, outputsCount_: number): number {
   const psbt = new bitcoin.Psbt({ network: PLACEHOLDER_NETWORK });
 
-  psbt.addInput({
-    hash: PLACEHOLDER_UTXO.tx,
-    index: PLACEHOLDER_UTXO.index,
-    witnessUtxo: {
-      script: PLACEHOLDER_P2TR.output!,
-      value: PLACEHOLDER_UTXO.value,
-    },
-    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
-  });
+  for (let i = 0; i < inputsCount_; i++) {
+    psbt.addInput({
+      hash: PLACEHOLDER_UTXO.tx,
+      index: PLACEHOLDER_UTXO.index,
+      witnessUtxo: {
+        script: PLACEHOLDER_P2TR.output!,
+        value: PLACEHOLDER_UTXO.value,
+      },
+      tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
+    });
+  }
 
-  psbt.addOutput({
-    address: PLACEHOLDER_P2TR_ADDRESS,
-    value: sats_,
-    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
-  });
-
-  psbt.addOutput({
-    address: PLACEHOLDER_P2TR_ADDRESS,
-    value: PLACEHOLDER_UTXO.value - sats_,
-    tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
-  });
+  for (let i = 0; i < outputsCount_; i++) {
+    psbt.addOutput({
+      address: PLACEHOLDER_P2TR_ADDRESS,
+      value: 1e6,
+      tapInternalKey: PLACEHOLDER_PUBLICK_KEY_X_ONLY,
+    });
+  }
 
   psbt.signInput(0, PLACEHOLDER_P2TR_SIGNER);
   psbt.finalizeAllInputs();
@@ -366,9 +385,10 @@ export default {
   tapInscribe: tapInscribe,
 
   getUTXOs: getUTXOs,
-  estTransferTxVSize: estTransferTxVSize,
-  estInscriptionTxSize: estInscriptionTxVSize,
+  estTxTransferSize: estTxTransferSize,
+  estTxInscribeSize: estTxInscribeSize,
 
   postTxHex: postTxHex,
   getMempoolBaseUrl: getMempoolBaseUrl,
+  countUTXOs: sumUTXOs,
 }
